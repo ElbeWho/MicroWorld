@@ -14,5 +14,8 @@ import custom_functions as cf
 
 pierwszy = cf.Stokes(5, 100)
 
-pierwszy.stokeslet()
+r0=np.array([0,0])            # position of the force red arrow - touchdown point
+f=np.array([0,1])             # direction of the force
+
+pierwszy.stokeslet(f)
 
