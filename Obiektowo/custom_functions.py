@@ -12,8 +12,8 @@ from mpl_toolkits import axes_grid1
 
 class Stokes:
     def __init__(self, a, b ):
-        self.a=5
-        self.b= 100
+        self.a=a
+        self.b= b
         xx = np.linspace(-a, a, b)
         yy = np.linspace(-a, a, b)
         mX, mY = np.meshgrid(xx,yy)
@@ -56,3 +56,4 @@ class Stokes:
     
 r0=np.array([0,0])            # position of the force red arrow - touchdown point
 f=np.array([0,1]) 
+
