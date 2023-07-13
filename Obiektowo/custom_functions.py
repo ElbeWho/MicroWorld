@@ -69,4 +69,5 @@ class Stokes:
 r0=np.array([0,0])            # position of the force red arrow - touchdown point
 f=np.array([0,1]) 
 
-
+a= Stokes()
+print(type(a))
