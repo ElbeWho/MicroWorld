@@ -30,6 +30,16 @@ class Stokes:
         yy = np.linspace(-a, a, b)
         self.mX, self.mY = np.meshgrid(xx,yy)
 
+    def forces(self, number ):
+        self.number = number
+    
+    def entries(self, entries):
+        self.entries = entries
+    
+    def get_entries(self):
+        print(self.entries)
+        print("trururru")
+
     def stokeslet(self, f,r0):
         Id=np.array([[1,0],[0,1]])
         r=np.array([self.mX-r0[0], self.mY-r0[1]])
@@ -44,6 +54,13 @@ class Stokes:
         u, v =Idf[:,np.newaxis,np.newaxis]/modr+rrTf/modr**3.
         self.u = u
         self.v = v
+
+    def many_stokeslets(self):
+        for j in range(0, len(self.entries)):
+            self.stokeslet( self.entries[j][0], self.entries[j][1])
+            self.u += self.u
+            self.v += self.v
+
     
     def get_velocities(self):
         print("v: ", self.v)
