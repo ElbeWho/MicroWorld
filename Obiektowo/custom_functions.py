@@ -9,62 +9,59 @@ import sympy
 from mpl_toolkits import axes_grid1
 
 class Stokes:
-    
-    def __init__(self, a, b ):
-        a=5
-        b=100
-        self.a=a
-        self.b= b
-        
-        xx = np.linspace(-a, a, b)
-        yy = np.linspace(-a, a, b)
+    def __init__ (self, plot_title):
+        self.plot_title = plot_title
 
-        mX, mY = np.meshgrid(xx,yy)
-        
+    def get_name(self):
+        print(self.plot_title)
+
+    def font(self): #nie wiem czy będę umiała tego uyc w przyszłości
         plt.rcParams['text.usetex'] = True
         plt.rcParams.update({
         'font.size': 8,
         'text.usetex': True,
         'text.latex.preamble': r'\usepackage{dsfont}'
-            })
-        
-#czy ja moge chciec miec same dane bez plotowania ich na wykresie
-#czy robie z tego stricte pod plotting
-#ale wsm to taki jest cel robic plots
-#mX, mY lecą w konstruktorze więc jest bezpiecznie - wcale nie jest bo ich nie widac xd but whyyyyyy
+        })
 
+    def __meshgrid__(self, a, b):
+        self.a = a
+        self.b = b
+        xx = np.linspace(-a, a, b)
+        yy = np.linspace(-a, a, b)
+        self.mX, self.mY = np.meshgrid(xx,yy)
 
-    def stokeslet(f, r0):
+    def stokeslet(self, f,r0):
         Id=np.array([[1,0],[0,1]])
-        r=np.array([mX-r0[0],mY-r0[1]])
+        r=np.array([self.mX-r0[0], self.mY-r0[1]])
 
-        Idf=np.dot(Id,f) 
-    
+        Idf=np.dot(Id,f) #mnożenie macierzy f oraz Id
+        
         rTf=(r*f[:,np.newaxis,np.newaxis]).sum(axis=0)
+    
         rrTf=(r*rTf[np.newaxis,])
         modr=(r[0]**2+r[1]**2)**.5
     
-        u,v=Idf[:,np.newaxis,np.newaxis]/modr[np.newaxis]+rrTf/modr**3.
-        
-        return [u,v]
+        u, v =Idf[:,np.newaxis,np.newaxis]/modr+rrTf/modr**3.
+        self.u = u
+        self.v = v
     
-    def B_dir(t,p,fx,fz):
-        ex = fx(p[0],p[1])
-        ez = fz(p[0],p[1])
-        n = (ex**2.0+ez**2.0)**0.5
-        return [ex/n, ez/n]
-    
-    def add_colorbar(im, aspect=20, pad_fraction=0.5, **kwargs):
+    def get_velocities(self):
+        print("v: ", self.v)
+        print("u: ", self.u)
+
+    def __plot__(self):
+        fig = plt.figure(figsize=(6,6),facecolor="w")
+        ax = plt.axes()
+        Z = np.sqrt(self.v**2+self.u**2)
+
+        self.image = ax.pcolormesh(self.mX, self.mY, Z,
+                norm=colors.LogNorm(vmin= 10**(-1), vmax=10**1),
+                #norm=colors.LogNorm(vmin=Z.min(), vmax=Z.max()),
+                snap=True,
+                cmap=plt.cm.inferno, rasterized=True, 
+                shading='gouraud', zorder=0)
         
-        divider = axes_grid1.make_axes_locatable(im.axes)
-        width = axes_grid1.axes_size.AxesY(im.axes, aspect=1./aspect)
-        pad = axes_grid1.axes_size.Fraction(pad_fraction, width)
-        current_ax = plt.gca()
-        cax = divider.append_axes("right", size=width, pad=pad)
-        plt.sca(current_ax)
-        return im.axes.figure.colorbar(im, cax=cax,**kwargs)
-
-r0=np.array([0,0])            # position of the force red arrow - touchdown point
-f=np.array([0,1]) 
-
-
+        
+    def save_plot(self):
+        plt.savefig('monopole_title.pdf', bbox_inches='tight', pad_inches=0, dpi=400)
+        plt.show()
