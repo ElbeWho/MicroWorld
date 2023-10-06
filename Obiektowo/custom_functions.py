@@ -29,16 +29,13 @@ class Stokes:
         xx = np.linspace(-a, a, b)
         yy = np.linspace(-a, a, b)
         self.mX, self.mY = np.meshgrid(xx,yy)
-
-    def forces(self, number ):
-        self.number = number
     
     def entries(self, entries):
         self.entries = entries
     
     def get_entries(self):
         print(self.entries)
-        print("trururru")
+  
 
     def stokeslet(self, f,r0):
         Id=np.array([[1,0],[0,1]])
