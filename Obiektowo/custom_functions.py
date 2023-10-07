@@ -48,20 +48,40 @@ class Stokes:
         rrTf=(r*rTf[np.newaxis,])
         modr=(r[0]**2+r[1]**2)**.5
     
-        u, v =Idf[:,np.newaxis,np.newaxis]/modr+rrTf/modr**3.
-        self.u = u
-        self.v = v
+        u0, v0 =Idf[:,np.newaxis,np.newaxis]/modr+rrTf/modr**3.
+        self.u0 = u0
+        self.v0 = v0
 
     def many_stokeslets(self):
+        
+        flag = 0
+
         for j in range(0, len(self.entries)):
             self.stokeslet( self.entries[j][0], self.entries[j][1])
-            self.u += self.u
-            self.v += self.v
 
+            if flag == 0:
+                self.u = self.u0
+                self.v = self.v0
+                flag += 1
+            else:
+                self.u += self.u0
+                self.v += self.v0
+                flag += 1
+                
     
     def get_velocities(self):
         print("v: ", self.v)
         print("u: ", self.u)
+
+    def add_colorbar(self, im, aspect=20, pad_fraction=0.5, **kwargs):
+        """Add a vertical color bar to an image plot."""
+        current_ax = plt.gca()  # Get the current axes
+        divider = axes_grid1.make_axes_locatable(current_ax)
+        width = axes_grid1.axes_size.AxesY(current_ax, aspect=1. / aspect)
+        pad = axes_grid1.axes_size.Fraction(pad_fraction, width)
+        cax = divider.append_axes("right", size=width, pad=pad)
+        return im.axes.figure.colorbar(im, cax=cax, **kwargs)
+
 
     def __plot__(self):
         fig = plt.figure(figsize=(6,6),facecolor="w")
@@ -75,7 +95,14 @@ class Stokes:
                 cmap=plt.cm.inferno, rasterized=True, 
                 shading='gouraud', zorder=0)
         
+        plt.streamplot(self.mX, self.mY, self.u, self.v, 
+               broken_streamlines=False, density=.6, color='k')
+        
+        self.add_colorbar(self.image)
+        plt.show()
+        
+        
         
     def save_plot(self):
         plt.savefig('monopole_title.pdf', bbox_inches='tight', pad_inches=0, dpi=400)
-        plt.show()
+        
