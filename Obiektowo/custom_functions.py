@@ -9,19 +9,19 @@ import sympy
 from mpl_toolkits import axes_grid1
 
 class Stokes:
+
     def __init__ (self, plot_title):
         self.plot_title = plot_title
 
-    def get_name(self):
-        print(self.plot_title)
-
-    def font(self): #nie wiem czy będę umiała tego uyc w przyszłości
         plt.rcParams['text.usetex'] = True
         plt.rcParams.update({
         'font.size': 8,
         'text.usetex': True,
         'text.latex.preamble': r'\usepackage{dsfont}'
         })
+
+    def get_name(self):
+        print(self.plot_title)
 
     def __meshgrid__(self, a, b):
         self.a = a
@@ -35,7 +35,6 @@ class Stokes:
     
     def get_entries(self):
         print(self.entries)
-  
 
     def stokeslet(self, f,r0):
         Id=np.array([[1,0],[0,1]])
@@ -53,7 +52,7 @@ class Stokes:
         self.v0 = v0
 
     def many_stokeslets(self):
-        
+
         flag = 0
 
         for j in range(0, len(self.entries)):
@@ -68,7 +67,6 @@ class Stokes:
                 self.v += self.v0
                 flag += 1
                 
-    
     def get_velocities(self):
         print("v: ", self.v)
         print("u: ", self.u)
@@ -81,7 +79,6 @@ class Stokes:
         pad = axes_grid1.axes_size.Fraction(pad_fraction, width)
         cax = divider.append_axes("right", size=width, pad=pad)
         return im.axes.figure.colorbar(im, cax=cax, **kwargs)
-
 
     def __plot__(self):
         fig = plt.figure(figsize=(6,6),facecolor="w")
@@ -99,10 +96,83 @@ class Stokes:
                broken_streamlines=False, density=.6, color='k')
         
         self.add_colorbar(self.image)
+        self.image = ax.set_title(fr'${self.plot_title}$', fontsize=16, color='k')
+
+    def __show__(self):
         plt.show()
-        
-        
         
     def save_plot(self):
         plt.savefig('monopole_title.pdf', bbox_inches='tight', pad_inches=0, dpi=400)
+
+#tu sie zaczyna nieskończony przepis
+'''
+        # set the starting point of the magnetic field line
+        xstart = np.linspace(-a, a, 20) 
+        ystart = np.zeros(20)
+        xstart[0] = 0 #to jest pozbywanie się kropek na p(0,0)
+        xstart[len(xstart)-1] = 0      
+        places=np.vstack([xstart,ystart]).T
+        # interpolate function of the Bx and Bz as functions of (x,z) position
+        fbx = interpolate.interp2d(xx,yy,u)
+        fbz = interpolate.interp2d(xx,yy,v)
+
+def B_dir(t,p,fx,fz):
+    ex = fx(p[0],p[1])
+    ez = fz(p[0],p[1])
+    n = (ex**2+ez**2)**0.5
+    return [ex/n, ez/n]
+    
+    def interpolation(self):
+
+        self.R=0.001
+        self.dt=0.8*R
+
+        # plot area
+        self.x0, self.x1= -0.99*self.a, 0.99*self.a
+        self.y0, self.y1= -0.99*self.a, 0.99*self.a
+
+        #set the ode function
+        sef.r=ode(B_dir)
+        r.set_integrator('vode')
+        r.set_f_params(fbx,fbz)
+
+        xs,ys = [],[]
+        for p in places:
+            x=[p[0]] 
+            y=[p[1]]
+            r.set_initial_value([p[0], p[1]], 0)
+            while r.successful():
+                r.integrate(r.t+dt)
+                x.append(r.y[0])
+                y.append(r.y[1])
+                
+                #       check if field line left drwaing area
+                if (not (x0<r.y[0] and r.y[0]<x1)) or (not (y0<r.y[1] and r.y[1]<y1)):
+                    break
+                xs.append(x)
+                ys.append(y)
+    
+        nxs,nys = [],[]
+        for p in places:
+            x=[p[0]] 
+            y=[-p[1]]
+            r.set_initial_value([p[0], p[1]], 0)
+            while r.successful():
+                r.integrate(r.t+dt)
+                x.append(r.y[0])
+                y.append(-r.y[1])
+                hit_electrode=False
+                #check if field line left drwaing area
+                if (not (x0<r.y[0] and r.y[0]<x1)) or (not (y0<r.y[1] and r.y[1]<y1)):
+                    break
+            nxs.append(x)
+            nys.append(y)
+
+
+
+
+
+
+''' 
+    
         
