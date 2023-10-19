@@ -8,14 +8,17 @@ monopol = custom_functions.Stokes("Monopol")
 
 monopol.__meshgrid__(5, 100)
 
-r0 = np.array([0, 0])
+r0 = np.array([0, 0.5])
+r2 = np.array([0, -0.5])
 r1 = np.array([0, 3.5])            
 f = np.array([0,1])   
 f1 = np.array([1, 3.5])
-       
-monopol.entries([ [f,r0], [f, r1]])
+ 
+monopol.entries([ [f,r0], [f1, r0]])
 
 monopol.many_stokeslets()
+
+
 
 monopol.__plot__()
 
