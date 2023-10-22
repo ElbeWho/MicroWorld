@@ -71,7 +71,7 @@ class Stokes:
 
         e = f/f 
 
-        d
+        d   
     
         r = np.array([self.mX-r0[0],self.mY-r0[1]])
     
