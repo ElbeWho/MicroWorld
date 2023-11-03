@@ -51,6 +51,23 @@ class Stokes:
         self.u0 = u0
         self.v0 = v0
 
+    def stresslet(f, r0, d):    
+
+        e = f/f
+        r = np.array([self.mX-r0[0], self.mY-r0[1]])
+        modr=(r[0]**2+r[1]**2)**.5 
+    
+        #jeden = ((d[0]*r[0]+ d[1]*r[1])*e[:, np.newaxis, np.newaxis] - (e[0]*r[0]+e[1]*r[1])*d[:, np.newaxis, np.newaxis] )/modr**3
+        dwa =  -((d[0]*e[0]+d[1]*e[1])*r)/modr**3
+        trzy = 3*((e[0]*r[0]+e[1]*r[1])*(d[0]*r[0]+ d[1]*r[1])*r)/modr**5 
+
+        us, vs = dwa+trzy
+
+        self.u = us
+        self.v = vs
+
+
+
     def many_stokeslets(self):
 
         flag = 0
@@ -66,28 +83,6 @@ class Stokes:
                 self.u += self.u0
                 self.v += self.v0
                 flag += 1
-
-    def characteristic(self, f, r0, type):
-
-        e = f/f 
-
-        d   
-    
-        r = np.array([self.mX-r0[0],self.mY-r0[1]])
-    
-        modr=(r[0]**2+r[1]**2)**.5 
-    
-        jeden = ((d[0]*r[0]+ d[1]*r[1])*e[:, np.newaxis, np.newaxis] - (e[0]*r[0]+e[1]*r[1])*d[:, np.newaxis, np.newaxis] )/modr**3
-        dwa =  -((d[0]*e[0]+d[1]*e[1])*r)/modr**3
-        trzy = 3*((e[0]*r[0]+e[1]*r[1])*(d[0]*r[0]+ d[1]*r[1])*r)/modr**5
-
-        if type == asym:
-            self.u, self.v = jeden
-        if type == sym:
-            self.u, self.v = dwa+trzy 
-        
-        
-    
         
     
                 
@@ -130,74 +125,3 @@ class Stokes:
         plt.savefig('monopole_title.pdf', bbox_inches='tight', pad_inches=0, dpi=400)
 
 #tu sie zaczyna nieskończony przepis
-'''
-        # set the starting point of the magnetic field line
-        xstart = np.linspace(-a, a, 20) 
-        ystart = np.zeros(20)
-        xstart[0] = 0 #to jest pozbywanie się kropek na p(0,0)
-        xstart[len(xstart)-1] = 0      
-        places=np.vstack([xstart,ystart]).T
-        # interpolate function of the Bx and Bz as functions of (x,z) position
-        fbx = interpolate.interp2d(xx,yy,u)
-        fbz = interpolate.interp2d(xx,yy,v)
-
-def B_dir(t,p,fx,fz):
-    ex = fx(p[0],p[1])
-    ez = fz(p[0],p[1])
-    n = (ex**2+ez**2)**0.5
-    return [ex/n, ez/n]
-    
-    def interpolation(self):
-
-        self.R=0.001
-        self.dt=0.8*R
-
-        # plot area
-        self.x0, self.x1= -0.99*self.a, 0.99*self.a
-        self.y0, self.y1= -0.99*self.a, 0.99*self.a
-
-        #set the ode function
-        sef.r=ode(B_dir)
-        r.set_integrator('vode')
-        r.set_f_params(fbx,fbz)
-
-        xs,ys = [],[]
-        for p in places:
-            x=[p[0]] 
-            y=[p[1]]
-            r.set_initial_value([p[0], p[1]], 0)
-            while r.successful():
-                r.integrate(r.t+dt)
-                x.append(r.y[0])
-                y.append(r.y[1])
-                
-                #       check if field line left drwaing area
-                if (not (x0<r.y[0] and r.y[0]<x1)) or (not (y0<r.y[1] and r.y[1]<y1)):
-                    break
-                xs.append(x)
-                ys.append(y)
-    
-        nxs,nys = [],[]
-        for p in places:
-            x=[p[0]] 
-            y=[-p[1]]
-            r.set_initial_value([p[0], p[1]], 0)
-            while r.successful():
-                r.integrate(r.t+dt)
-                x.append(r.y[0])
-                y.append(-r.y[1])
-                hit_electrode=False
-                #check if field line left drwaing area
-                if (not (x0<r.y[0] and r.y[0]<x1)) or (not (y0<r.y[1] and r.y[1]<y1)):
-                    break
-            nxs.append(x)
-            nys.append(y)
-
-
-
-
-
-
-''' 
-    
-        
