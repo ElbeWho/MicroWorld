@@ -37,6 +37,7 @@ class Stokes:
         print(self.entries)
 
     def stokeslet(self, f,r0):
+        
         Id=np.array([[1,0],[0,1]])
         r=np.array([self.mX-r0[0], self.mY-r0[1]])
 
@@ -51,9 +52,8 @@ class Stokes:
         self.u0 = u0
         self.v0 = v0
 
-    def stresslet(f, r0, d):    
+    def stresslet(self, r0, d, e):    
 
-        e = f/f
         r = np.array([self.mX-r0[0], self.mY-r0[1]])
         modr=(r[0]**2+r[1]**2)**.5 
     
@@ -66,7 +66,41 @@ class Stokes:
         self.u = us
         self.v = vs
 
+    def rotlet(self, r0, d, e):
 
+        r = np.array([self.mX-r0[0], self.mY-r0[1]])
+        modr=(r[0]**2+r[1]**2)**.5 
+    
+        jeden = ((d[0]*r[0]+ d[1]*r[1])*e[:, np.newaxis, np.newaxis] - (e[0]*r[0]+e[1]*r[1])*d[:, np.newaxis, np.newaxis] )/modr**3
+        
+        ua, va = jeden
+
+        self.u = ua
+        self.v = va
+
+    def source(self, r0):
+
+        r = np.array([self.mX-r0[0], self.mY-r0[1]])
+        modr=(r[0]**2+r[1]**2)**.5 
+
+        macierz = r/modr**2
+
+        ur, vr = macierz
+
+        self.u = ur
+        self.v = vr
+
+    def source_doublet(self, r0, e):
+        
+        r = np.array([self.mX-r0[0], self.mY-r0[1]])
+        modr=(r[0]**2+r[1]**2)**.5
+
+        macierz2 = (2*(r*e)*r - e)/modr**3
+
+        usd, vsd = macierz2
+
+        self.u = usd
+        self.v = vsd
 
     def many_stokeslets(self):
 

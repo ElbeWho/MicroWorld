@@ -19,7 +19,7 @@ f = np.array([0,1])
 
 d = np.array([1,0])
 
-monopol.stresslet(f, r0, d)
+monopol.save_plot(r0, f)
  
 #monopol.entries([ [f,r0], [f1, r0]])
 
