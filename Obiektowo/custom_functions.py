@@ -10,26 +10,20 @@ from mpl_toolkits import axes_grid1
 
 class Stokes:
 
-    def __init__ (self, plot_title):
-        self.plot_title = plot_title
+    def __init__ (self, a, b):
 
-        plt.rcParams['text.usetex'] = True
-        plt.rcParams.update({
-        'font.size': 8,
-        'text.usetex': True,
-        'text.latex.preamble': r'\usepackage{dsfont}'
-        })
-
-    def get_name(self):
-        print(self.plot_title)
-
-    def __meshgrid__(self, a, b):
         self.a = a
         self.b = b
         xx = np.linspace(-a, a, b)
         yy = np.linspace(-a, a, b)
         self.mX, self.mY = np.meshgrid(xx,yy)
-    
+        A = np.array([mX, mY]) #nieleganckie takie zagranie
+        self.v = np.zeros(A.shape)
+        self.u = np.zeros(A.shape)
+
+    def get_name(self):
+        print(self.plot_title)
+
     def entries(self, entries):
         self.entries = entries
     
@@ -37,9 +31,10 @@ class Stokes:
         print(self.entries)
 
     def stokeslet(self, f,r0):
+
+        r=np.array([self.mX-r0[0], self.mY-r0[1]])
         
         Id=np.array([[1,0],[0,1]])
-        r=np.array([self.mX-r0[0], self.mY-r0[1]])
 
         Idf=np.dot(Id,f) #mnożenie macierzy f oraz Id
         
@@ -49,12 +44,13 @@ class Stokes:
         modr=(r[0]**2+r[1]**2)**.5
     
         u0, v0 =Idf[:,np.newaxis,np.newaxis]/modr+rrTf/modr**3.
-        self.u = u0
-        self.v = v0
+        self.u += u0
+        self.v += v0
 
     def stresslet(self, r0, d, e):    
-
-        r = np.array([self.mX-r0[0], self.mY-r0[1]])
+        
+        r=np.array([self.mX-r0[0], self.mY-r0[1]])
+        
         modr=(r[0]**2+r[1]**2)**.5 
     
         #jeden = ((d[0]*r[0]+ d[1]*r[1])*e[:, np.newaxis, np.newaxis] - (e[0]*r[0]+e[1]*r[1])*d[:, np.newaxis, np.newaxis] )/modr**3
@@ -63,8 +59,8 @@ class Stokes:
 
         us, vs = dwa+trzy
 
-        self.u = us
-        self.v = vs
+        self.u += us
+        self.v += vs
 
     def rotlet(self, r0, d, e):
 
@@ -75,8 +71,8 @@ class Stokes:
         
         ua, va = jeden
 
-        self.u = ua
-        self.v = va
+        self.u += ua
+        self.v += va
 
     def source(self, r0):
 
@@ -87,8 +83,8 @@ class Stokes:
 
         ur, vr = macierz
 
-        self.u = ur
-        self.v = vr
+        self.u += ur
+        self.v += vr
 
     def source_doublet(self, r0, e):
         
@@ -101,8 +97,8 @@ class Stokes:
 
         usd, vsd = doublet
 
-        self.u = usd
-        self.v = vsd
+        self.u += usd
+        self.v += vsd
 
     def many_stokeslets(self):
 
@@ -121,7 +117,6 @@ class Stokes:
                 flag += 1
         
     
-                
     def get_velocities(self):
         print("v: ", self.v)
         print("u: ", self.u)
