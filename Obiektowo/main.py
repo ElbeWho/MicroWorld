@@ -15,20 +15,14 @@ f1 = np.array([1, 3.5])
 
 f = np.array([0,1])   
 
+#monopol.source_doublet(r0, f)
 
-
+monopol.stokeslet(f, r0)
+print(monopol)
 d = np.array([1,0])
 
-monopol.save_plot(r0, f)
- 
-#monopol.entries([ [f,r0], [f1, r0]])
 
-#monopol.many_stokeslets()
+
 
 monopol.__plot__()
-
 monopol.__show__()
-
-monopol.title()
-
-#monopol.save_plot()

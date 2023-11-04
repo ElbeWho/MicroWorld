@@ -49,8 +49,8 @@ class Stokes:
         modr=(r[0]**2+r[1]**2)**.5
     
         u0, v0 =Idf[:,np.newaxis,np.newaxis]/modr+rrTf/modr**3.
-        self.u0 = u0
-        self.v0 = v0
+        self.u = u0
+        self.v = v0
 
     def stresslet(self, r0, d, e):    
 
@@ -95,9 +95,11 @@ class Stokes:
         r = np.array([self.mX-r0[0], self.mY-r0[1]])
         modr=(r[0]**2+r[1]**2)**.5
 
-        macierz2 = (2*(r*e)*r - e)/modr**3
+        rer = 3*(r[0]*e[0]+r[1]*e[1])*r
 
-        usd, vsd = macierz2
+        doublet = rer/modr**3 - e[:,np.newaxis,np.newaxis]/modr**3
+
+        usd, vsd = doublet
 
         self.u = usd
         self.v = vsd
@@ -146,7 +148,9 @@ class Stokes:
                 shading='gouraud', zorder=0)
         
         plt.streamplot(self.mX, self.mY, self.u, self.v, 
-               broken_streamlines=False, density=.6, color='k')
+               broken_streamlines=False, 
+               #density=.6, 
+               color='k')
         
         self.add_colorbar(self.image)
         self.image = ax.set_title(r'$\displaystyle\\v(r)='
