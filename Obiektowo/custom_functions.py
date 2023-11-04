@@ -17,18 +17,8 @@ class Stokes:
         xx = np.linspace(-a, a, b)
         yy = np.linspace(-a, a, b)
         self.mX, self.mY = np.meshgrid(xx,yy)
-        A = np.array([self.mX, self.mY]) #nieleganckie takie zagranie
+        self.u = np.zeros(self.mX.shape)
         self.v = np.zeros(self.mX.shape)
-        self.u = np.zeros(self.mY.shape)
-
-    def get_name(self):
-        print(self.plot_title)
-
-    def entries(self, entries):
-        self.entries = entries
-    
-    def get_entries(self):
-        print(self.entries)
 
     def stokeslet(self, f,r0):
 
@@ -53,7 +43,6 @@ class Stokes:
         
         modr=(r[0]**2+r[1]**2)**.5 
     
-        #jeden = ((d[0]*r[0]+ d[1]*r[1])*e[:, np.newaxis, np.newaxis] - (e[0]*r[0]+e[1]*r[1])*d[:, np.newaxis, np.newaxis] )/modr**3
         dwa =  -((d[0]*e[0]+d[1]*e[1])*r)/modr**3
         trzy = 3*((e[0]*r[0]+e[1]*r[1])*(d[0]*r[0]+ d[1]*r[1])*r)/modr**5 
 
@@ -86,7 +75,7 @@ class Stokes:
         self.u += ur
         self.v += vr
 
-    def source_doublet(self, r0, e):
+    def source_doublet(self, e, r0):
         
         r = np.array([self.mX-r0[0], self.mY-r0[1]])
         modr=(r[0]**2+r[1]**2)**.5
@@ -99,27 +88,6 @@ class Stokes:
 
         self.u += usd
         self.v += vsd
-
-    def many_stokeslets(self):
-
-        flag = 0
-
-        for j in range(0, len(self.entries)):
-            self.stokeslet( self.entries[j][0], self.entries[j][1])
-
-            if flag == 0:
-                self.u = self.u0
-                self.v = self.v0
-                flag += 1
-            else:
-                self.u += self.u0
-                self.v += self.v0
-                flag += 1
-        
-    
-    def get_velocities(self):
-        print("v: ", self.v)
-        print("u: ", self.u)
 
     def add_colorbar(self, im, aspect=20, pad_fraction=0.5, **kwargs):
         """Add a vertical color bar to an image plot."""
@@ -136,8 +104,8 @@ class Stokes:
         Z = np.sqrt(self.v**2+self.u**2)
 
         self.image = ax.pcolormesh(self.mX, self.mY, Z,
-                norm=colors.LogNorm(vmin= 10**(-1), vmax=10**1),
-                #norm=colors.LogNorm(vmin=Z.min(), vmax=Z.max()),
+                #norm=colors.LogNorm(vmin= 10**(-1), vmax=10**1),
+                norm=colors.LogNorm(vmin=Z.min(), vmax=Z.max()),
                 snap=True,
                 cmap=plt.cm.inferno, rasterized=True, 
                 shading='gouraud', zorder=0)
@@ -148,8 +116,9 @@ class Stokes:
                color='k')
         
         self.add_colorbar(self.image)
-        self.image = ax.set_title(r'$\displaystyle\\v(r)='
-               r'\frac{\mathbf{F}}{8 \pi \eta r } ( \mathds{1} + \frac{\mathbf{rr}}{r^2})$', fontsize=16, color='k')
+
+        #self.image = ax.set_title(r'$\displaystyle\\v(r)='
+         #      r'\frac{\mathbf{F}}{8 \pi \eta r } ( \mathds{1} + \frac{\mathbf{rr}}{r^2})$', fontsize=16, color='k')
 
     def __show__(self):
         plt.show()
@@ -157,4 +126,7 @@ class Stokes:
     def save_plot(self):
         plt.savefig('monopole_title.pdf', bbox_inches='tight', pad_inches=0, dpi=400)
 
-#tu sie zaczyna nieskończony przepis
+#czyli musiałabym miec jednocześnie zapisane pole ale tez pojedyncze prędkości
+
+#class Stokes_movie:
+ #   def

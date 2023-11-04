@@ -19,9 +19,13 @@ f = np.array([0,1])
 #najlepiej, eby prędkość się aktualizowała przy kadym wywołaniu funkcji 
 #troche głupie to ale wsm ma sens bo takie jest przeznaczenie tego modułu
 
+#lepiej skala nie na sztywno
+#ale przydałoby móc się zablokować na jakichś wartościach
+
 
 monopol.stokeslet(f, r0)
 
+monopol.source_doublet(-f, r1)
 
 
 
