@@ -17,9 +17,9 @@ class Stokes:
         xx = np.linspace(-a, a, b)
         yy = np.linspace(-a, a, b)
         self.mX, self.mY = np.meshgrid(xx,yy)
-        A = np.array([mX, mY]) #nieleganckie takie zagranie
-        self.v = np.zeros(A.shape)
-        self.u = np.zeros(A.shape)
+        A = np.array([self.mX, self.mY]) #nieleganckie takie zagranie
+        self.v = np.zeros(self.mX.shape)
+        self.u = np.zeros(self.mY.shape)
 
     def get_name(self):
         print(self.plot_title)
