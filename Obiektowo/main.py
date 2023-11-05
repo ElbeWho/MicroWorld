@@ -16,7 +16,7 @@ f = np.array([0,1])
 
 #monopol.source_doublet(r0, f)
 #nie no dodwanie tego jest kompletnie bez sensu -.-
-#najlepiej, eby prędkość się aktualizowała przy kadym wywołaniu funkcji 
+#najlepiej, zeby prędkość się aktualizowała przy kadym wywołaniu funkcji 
 #troche głupie to ale wsm ma sens bo takie jest przeznaczenie tego modułu
 
 #lepiej skala nie na sztywno
