@@ -23,11 +23,14 @@ f = np.array([0,1])
 #ale przydałoby móc się zablokować na jakichś wartościach
 
 
-monopol.stokeslet(f, r0)
+#monopol.stokeslet(f, r0)
+d = np.array([1, 0])
 
-monopol.source_doublet(-f, r1)
+monopol.rotlet(r0, d, f)
 
+R = np.array([0, 0, 1])
 
+#monopol.rotlet_R(r0, R)
 
 monopol.__plot__()
 monopol.__show__()

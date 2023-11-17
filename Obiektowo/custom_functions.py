@@ -37,38 +37,45 @@ class Stokes:
         self.u += u0
         self.v += v0
 
-    def stresslet(self, r0, d, e):    
-        
+    def stresslet(self, r0, d, e):     
         r=np.array([self.mX-r0[0], self.mY-r0[1]])
-        
-        modr=(r[0]**2+r[1]**2)**.5 
-    
+        modr=(r[0]**2+r[1]**2)**.5    
         dwa =  -((d[0]*e[0]+d[1]*e[1])*r)/modr**3
         trzy = 3*((e[0]*r[0]+e[1]*r[1])*(d[0]*r[0]+ d[1]*r[1])*r)/modr**5 
-
         us, vs = dwa+trzy
-
         self.u += us
         self.v += vs
 
     def rotlet(self, r0, d, e):
-
         r = np.array([self.mX-r0[0], self.mY-r0[1]])
         modr=(r[0]**2+r[1]**2)**.5 
-    
         jeden = ((d[0]*r[0]+ d[1]*r[1])*e[:, np.newaxis, np.newaxis] - (e[0]*r[0]+e[1]*r[1])*d[:, np.newaxis, np.newaxis] )/modr**3
-        
         ua, va = jeden
+        self.u += ua
+        self.v += va
+        print(jeden.shape)
+        print(ua.shape)
+    
+    def rotlet_R(self, r0, R):
+        r = np.array([self.mX-r0[0], self.mY-r0[1]])
+        modr = (r[0]**2+r[1]**2)**.5
+        x = np.array([1, 0])
+        y = np.array([1, 0])
+
+        ua = -(R[2]*r0[1])/modr**3
+        va = (R[2]*r0[0])/modr**3
 
         self.u += ua
         self.v += va
+        print(ua.shape)
+
 
     def source(self, r0):
 
         r = np.array([self.mX-r0[0], self.mY-r0[1]])
         modr=(r[0]**2+r[1]**2)**.5 
 
-        macierz = r/modr**2
+        macierz = r/modr**3
 
         ur, vr = macierz
 
@@ -82,7 +89,7 @@ class Stokes:
 
         rer = 3*(r[0]*e[0]+r[1]*e[1])*r
 
-        doublet = rer/modr**3 - e[:,np.newaxis,np.newaxis]/modr**3
+        doublet = rer/modr**5 - e[:,np.newaxis,np.newaxis]/modr**3
 
         usd, vsd = doublet
 
@@ -112,7 +119,7 @@ class Stokes:
         
         plt.streamplot(self.mX, self.mY, self.u, self.v, 
                broken_streamlines=False, 
-               #density=.6, 
+               density=.6, 
                color='k')
         
         self.add_colorbar(self.image)
