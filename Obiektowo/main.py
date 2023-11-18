@@ -27,7 +27,7 @@ f = np.array([0,1])
 d = np.array([1, 0])
 
 monopol.clearence(r0, d, f)
-
+#monopol.rotlet(r0, d, f)
 R = np.array([0, 0, 1])
 
 #monopol.rotlet_R(r0, R)

@@ -63,12 +63,13 @@ class Stokes:
         r = np.array([self.mX-r0[0], self.mY-r0[1]])
         modr = (r[0]**2+r[1]**2)**.5 
 
-        z = np.array([0, 0, 1])
+        z = nz = d[:, np.newaxis, np.newaxis]
+
         x = np.array([1, 0])
         y = np.array([0, 1])
 
         first_move = (d[0]*e[1] - d[1]*e[0])*z[:, np.newaxis, np.newaxis, np.newaxis]
-        second_move = -first_move[2]*r0[1]*x[:, np.newaxis, np.newaxis]/modr**3 + first_move[2]*r0[0]*y[:, np.newaxis, np.newaxis]/modr**5
+        second_move = -first_move[2]*r0[1]*x[:, np.newaxis, np.newaxis]/modr**3 + first_move[2]*r0[0]*y[:, np.newaxis, np.newaxis]/modr**3
         
         #ua = -first_move[2]*r0[1]*x[:, np.newaxis, np.newaxis]
 
