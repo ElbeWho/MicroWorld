@@ -48,51 +48,69 @@ class Stokes:
 
     def rotlet(self, r0, d, e):
         r = np.array([self.mX-r0[0], self.mY-r0[1]])
-        modr=(r[0]**2+r[1]**2)**.5 
+        modr = (r[0]**2+r[1]**2)**.5 
+        print("angie", d.shape)
+        z = d[:, np.newaxis, np.newaxis]
+        print(z.shape)
         jeden = ((d[0]*r[0]+ d[1]*r[1])*e[:, np.newaxis, np.newaxis] - (e[0]*r[0]+e[1]*r[1])*d[:, np.newaxis, np.newaxis] )/modr**3
         ua, va = jeden
         self.u += ua
         self.v += va
         print(jeden.shape)
-        print(ua.shape)
+        print(ua)
+
+    def clearence(self, r0, d, e):
+        r = np.array([self.mX-r0[0], self.mY-r0[1]])
+        modr = (r[0]**2+r[1]**2)**.5 
+
+        z = np.array([0, 0, 1])
+        x = np.array([1, 0])
+        y = np.array([0, 1])
+
+        first_move = (d[0]*e[1] - d[1]*e[0])*z[:, np.newaxis, np.newaxis, np.newaxis]
+        second_move = -first_move[2]*r0[1]*x[:, np.newaxis, np.newaxis]/modr**3 + first_move[2]*r0[0]*y[:, np.newaxis, np.newaxis]/modr**5
+        
+        #ua = -first_move[2]*r0[1]*x[:, np.newaxis, np.newaxis]
+
+
+        ua, va = second_move
+        self.u += ua
+        self.v += va
+        
+        print(ua)
     
     def rotlet_R(self, r0, R):
         r = np.array([self.mX-r0[0], self.mY-r0[1]])
         modr = (r[0]**2+r[1]**2)**.5
+        print("angeline", np.cross(np.array([1, 0]), np.array([0, 1])))
         x = np.array([1, 0])
-        y = np.array([1, 0])
+        y = np.array([0, 1])
+        #modle = np.cross(R, r0)/modr**3
+        modle = -(R[2]*r0[1])*x[:, np.newaxis, np.newaxis]/modr**3 + (R[2]*r0[0])*y[:, np.newaxis, np.newaxis]/modr**3
+        print(modle.shape)
+        ua, va = modle
 
-        ua = -(R[2]*r0[1])/modr**3
-        va = (R[2]*r0[0])/modr**3
-
+        #ua = -(R[2]*r0[1])*x[:, np.newaxis, np.newaxis]/modr**3 
+        #va = (R[2]*r0[0])*y[:, np.newaxis, np.newaxis]/modr**3
         self.u += ua
         self.v += va
-        print(ua.shape)
+        print(ua)
 
 
     def source(self, r0):
-
         r = np.array([self.mX-r0[0], self.mY-r0[1]])
         modr=(r[0]**2+r[1]**2)**.5 
-
         macierz = r/modr**3
-
         ur, vr = macierz
-
         self.u += ur
         self.v += vr
 
     def source_doublet(self, e, r0):
-        
         r = np.array([self.mX-r0[0], self.mY-r0[1]])
         modr=(r[0]**2+r[1]**2)**.5
-
         rer = 3*(r[0]*e[0]+r[1]*e[1])*r
-
         doublet = rer/modr**5 - e[:,np.newaxis,np.newaxis]/modr**3
-
         usd, vsd = doublet
-
         self.u += usd
         self.v += vsd
 
