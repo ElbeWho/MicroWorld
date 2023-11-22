@@ -49,7 +49,7 @@ class Stokes:
     def rotlet(self, r0, d, e):
         r = np.array([self.mX-r0[0], self.mY-r0[1]])
         modr = (r[0]**2+r[1]**2)**.5 
-        print("angie", d.shape)
+        print("a", d.shape)
         z = d[:, np.newaxis, np.newaxis]
         print(z.shape)
         jeden = ((d[0]*r[0]+ d[1]*r[1])*e[:, np.newaxis, np.newaxis] - (e[0]*r[0]+e[1]*r[1])*d[:, np.newaxis, np.newaxis] )/modr**3
@@ -63,7 +63,7 @@ class Stokes:
         r = np.array([self.mX-r0[0], self.mY-r0[1]])
         modr = (r[0]**2+r[1]**2)**.5 
 
-        z = nz = d[:, np.newaxis, np.newaxis]
+        z = nz = np.array([0, 0, 1])
 
         x = np.array([1, 0])
         y = np.array([0, 1])
@@ -83,16 +83,17 @@ class Stokes:
     def rotlet_R(self, r0, R):
         r = np.array([self.mX-r0[0], self.mY-r0[1]])
         modr = (r[0]**2+r[1]**2)**.5
-        print("angeline", np.cross(np.array([1, 0]), np.array([0, 1])))
+        print("a", np.cross(np.array([1, 0]), np.array([0, 1])))
         x = np.array([1, 0])
         y = np.array([0, 1])
         #modle = np.cross(R, r0)/modr**3
-        modle = -(R[2]*r0[1])*x[:, np.newaxis, np.newaxis]/modr**3 + (R[2]*r0[0])*y[:, np.newaxis, np.newaxis]/modr**3
+        modle = -(R[2]*r[1])*x[:, np.newaxis, np.newaxis]/modr**3 + (R[2]*r[0])*y[:, np.newaxis, np.newaxis]/modr**3
         print(modle.shape)
-        ua, va = modle
+        #ua, va = modle
 
-        #ua = -(R[2]*r0[1])*x[:, np.newaxis, np.newaxis]/modr**3 
-        #va = (R[2]*r0[0])*y[:, np.newaxis, np.newaxis]/modr**3
+        ua = -(R[2]*r[1])/modr**3 
+        va = (R[2, np.newaxis, np.newaxis]*r[0])/modr**3
+        print(R[2, np.newaxis, np.newaxis])
         self.u += ua
         self.v += va
         print(ua)
@@ -156,3 +157,4 @@ class Stokes:
 
 #class Stokes_movie:
  #   def
+
