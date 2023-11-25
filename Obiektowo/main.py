@@ -7,8 +7,8 @@ monopol = custom_functions.Stokes(5, 100)
                r'\frac{\mathbf{F}}{8 \pi \eta r } ( \mathds{1} + \frac{\mathbf{rr}}{r^2})$' '''
 
 
-r0 = np.array([0, 0.5])
-r2 = np.array([0, -0.5])
+r0 = np.array([0, 1])
+r2 = np.array([0, -1])
 r1 = np.array([0, 3.5])  
 f1 = np.array([1, 3.5])          
 
@@ -29,8 +29,10 @@ d = np.array([1, 0])
 #monopol.clearence(r0, d, f)
 #monopol.rotlet(r0, d, f)
 R = np.array([0, 0, 1])
+R2 = np.array([0, 0, 1 ])
 
 monopol.rotlet_R(r0, R)
+monopol.rotlet_R(r2, R2)
 
 monopol.__plot__()
 monopol.__show__()
