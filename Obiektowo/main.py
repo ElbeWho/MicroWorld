@@ -1,38 +1,18 @@
 import numpy as np
-import custom_functions
+import MicroWorld #importing software
+#using class Stokes form MicroWorls
+plot_for_posem = MicroWorld.Stokes(5, 100) 
+#radiuses and distance d
+r0 = np.array([0,0])
+r1 = np.array([2, 2])
+r2 = np.array([-2, -2])
+d = np.array([0,0.1])
+#forces        
+f  = np.array([0.55, 0.3]) 
+#adding choosen characteristic sollutions
+plot_for_posem.source(r0)
+plot_for_posem.dipole(r1, d, f)
+plot_for_posem.stokeslet(f, r2)
+plot_for_posem.__plot__()
+plot_for_posem.__show__()
 
-monopol = custom_functions.Stokes(5, 100) 
-                                  
-'''r'$\displaystyle\\v(r)='
-               r'\frac{\mathbf{F}}{8 \pi \eta r } ( \mathds{1} + \frac{\mathbf{rr}}{r^2})$' '''
-
-
-r0 = np.array([0, 1])
-r2 = np.array([0, -1])
-r1 = np.array([0, 3.5])  
-f1 = np.array([1, 3.5])          
-
-f = np.array([0,1])   
-
-#monopol.source_doublet(r0, f)
-#nie no dodwanie tego jest kompletnie bez sensu -.-
-#najlepiej, zeby prędkość się aktualizowała przy kadym wywołaniu funkcji 
-#troche głupie to ale wsm ma sens bo takie jest przeznaczenie tego modułu
-
-#lepiej skala nie na sztywno
-#ale przydałoby móc się zablokować na jakichś wartościach
-
-
-#monopol.stokeslet(f, r0)
-d = np.array([1, 0])
-
-#monopol.clearence(r0, d, f)
-#monopol.rotlet(r0, d, f)
-R = np.array([0, 0, 1])
-R2 = np.array([0, 0, 1 ])
-
-monopol.rotlet_R(r0, R)
-monopol.rotlet_R(r2, R2)
-
-monopol.__plot__()
-monopol.__show__()

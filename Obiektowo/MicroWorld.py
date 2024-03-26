@@ -31,6 +31,33 @@ class Stokes:
         self.u += u0
         self.v += v0
 
+    def dipole_Tylor(self, r0):
+
+        Id=np.zeros([self.b ,self.b ])
+        for i in range(0,self.b ):
+            Id[i,i]=1
+        
+        r=np.array([self.mX-r0[0], self.mY-r0[1]])
+    
+        Idr = np.dot(r, Id)
+        x2r = r*(r[1,:]**2)
+        modr=(r[0]**2+r[1]**2)**.5
+    
+        udip, vdip =   3*x2r/modr**5  - Idr/modr**3
+        self.u += udip
+        self.v += vdip
+
+    def dipole(self, r0, d, e):
+        r=np.array([self.mX-r0[0], self.mY-r0[1]])
+        modr=(r[0]**2+r[1]**2)**.5    
+        dwa =  -((d[0]*e[0]+d[1]*e[1])*r)/modr**3
+        trzy = 3*((e[0]*r[0]+e[1]*r[1])*(d[0]*r[0]+ d[1]*r[1])*r)/modr**5 
+        jeden = ((d[0]*r[0]+ d[1]*r[1])*e[:, np.newaxis, np.newaxis] - (e[0]*r[0]+e[1]*r[1])*d[:, np.newaxis, np.newaxis] )/modr**3
+        ud, vd = dwa+trzy+jeden
+        self.u += ud
+        self.v += vd
+        
+
     def stresslet(self, r0, d, e):     
         r=np.array([self.mX-r0[0], self.mY-r0[1]])
         modr=(r[0]**2+r[1]**2)**.5    
@@ -96,18 +123,24 @@ class Stokes:
         
         plt.streamplot(self.mX, self.mY, self.u, self.v, 
                broken_streamlines=False, 
-               density=.6, 
-               color='k')
+               density=0.3, 
+               color='k'
+               )
         
         self.add_colorbar(self.image)
+
+       
 
         #self.image = ax.set_title(r'$\displaystyle\\v(r)='
          #      r'\frac{\mathbf{F}}{8 \pi \eta r } ( \mathds{1} + \frac{\mathbf{rr}}{r^2})$', fontsize=16, color='k')
 
     def __show__(self):
+        plt.savefig('right_one.png', bbox_inches='tight', pad_inches=0, dpi=400)
+
         plt.show()
+        #plt.savefig('fafik.pdf', bbox_inches='tight', pad_inches=0, dpi=400)
         
-    def save_plot(self):
-        plt.savefig('monopole_title.pdf', bbox_inches='tight', pad_inches=0, dpi=400)
+    #def save_plot(self):
+     #    plt.savefig('whatttt.pdf', bbox_inches='tight', pad_inches=0, dpi=400)
 
 
