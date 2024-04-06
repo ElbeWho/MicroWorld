@@ -7,27 +7,54 @@ from matplotlib import cm
 import sympy
 from mpl_toolkits import axes_grid1
 
-class Stokes:
+class Equations2D:
+    """ 
+    Stokes equation is relevant for the regime where Reynold's number Re << 1.
+    This module provides ploting on meshgrid choosen singularity equations. 
+    """
+    
+    def __init__ (self, a: float, b: float, steps: float):
+        """
+        To initialize an object from this class size of the plot must be specified.
 
-    def __init__ (self, a, b):
+        Arguments:
+            a: lenght of the plot
+            b: width of the plot
+            steps: space between first and last point for both lenth and wisth
+
+        ---------
+            
+            Velocity values prepared to be used at the end of the definition:
+            u: values of velocity in the x direction
+            v: values of velocity in the y direction
+        """
 
         self.a = a
         self.b = b
-        xx = np.linspace(-a, a, b)
-        yy = np.linspace(-a, a, b)
+        self.steps = steps
+        xx = np.linspace(-a, a, steps)
+        yy = np.linspace(-b, b, steps)
         self.mX, self.mY = np.meshgrid(xx,yy)
         self.u = np.zeros(self.mX.shape)
-        self.v = np.zeros(self.mX.shape)
+        self.v = np.zeros(self.mY.shape)
 
-    def stokeslet(self, f,r0):
+    def stokeslet(self, r0: np.ndarray, f: np.ndarray):
+        """
+        The fundamental sullution to the Stokes' equation with one point force applied
+        is called Stokeslet.
+        Equation:
+        V(r)  = F/(8ηπr) (1 + r.r/|r|^2)
+
+        Arguments:
+            r0: position of the force
+            f: direction of the force
+        """
+    
         r=np.array([self.mX-r0[0], self.mY-r0[1]])
         Id=np.array([[1,0],[0,1]])
         Idf=np.dot(Id,f) 
-
         rTf=(r*f[:,np.newaxis,np.newaxis]).sum(axis=0)
-
         rrTf=(r*rTf[np.newaxis,])
-
         modr=(r[0]**2+r[1]**2)**.5
         u0, v0 =Idf[:,np.newaxis,np.newaxis]/modr+rrTf/modr**3.
         self.u += u0
@@ -102,13 +129,6 @@ class Stokes:
         self.u += usd
         self.v += vsd
 
-        """r = np.array([self.mX-r0[0], self.mY-r0[1]])
-        modr=(r[0]**2+r[1]**2)**.5
-        rer = 3*(r[0]*e[0]+r[1]*e[1])*r
-        doublet = rer/modr**5 - e[:,np.newaxis,np.newaxis]/modr**3
-        usd, vsd = doublet
-        self.u += usd
-        self.v += vsd"""
 
     def source_dipole(self, r0):
         M = np.array([1,0])

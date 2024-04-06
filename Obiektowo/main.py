@@ -1,7 +1,7 @@
 import numpy as np
-import MicroWorld #importing software
+import Stokes_2D #importing software
 #using class Stokes form MicroWorls
-plot = MicroWorld.Stokes(5, 100) 
+plot = Stokes_2D.Equations2D(5, 100) 
 #radiuses and distance d
 r0 = np.array([0,0])
 
