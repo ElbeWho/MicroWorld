@@ -89,18 +89,16 @@ for q in Q:
                 break
 
         if step >= max_step:
-            plt.plot(lx, ly, lz, 'r', lw=0.5)
+            ax.plot(lx, ly, lz, 'r', lw=0.5)
         else:
-            plt.plot(lx, ly, lz, 'k', lw=0.5)
+            ax.plot(lx, ly, lz, 'k', lw=0.5)
 
 for q in Q:
     if q[3] > 0:
-        plt.plot(q[0], q[1], q[2], 'ro')
+        ax.plot(q[0], q[1], q[2], 'ro')
     else:
-        plt.plot(q[0], q[1], q[2], 'bo')
+        ax.plot(q[0], q[1], q[2], 'bo')
 
-ax.set_xlim(s, e)
-ax.set_ylim(s, e)
-ax.set_zlim(s, e)
+
 
 plt.show()

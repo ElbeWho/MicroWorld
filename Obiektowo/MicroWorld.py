@@ -1,6 +1,5 @@
 import numpy as np
 import ast
-import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors 
 import matplotlib.cbook as cbook
@@ -24,8 +23,11 @@ class Stokes:
         r=np.array([self.mX-r0[0], self.mY-r0[1]])
         Id=np.array([[1,0],[0,1]])
         Idf=np.dot(Id,f) 
+
         rTf=(r*f[:,np.newaxis,np.newaxis]).sum(axis=0)
+
         rrTf=(r*rTf[np.newaxis,])
+
         modr=(r[0]**2+r[1]**2)**.5
         u0, v0 =Idf[:,np.newaxis,np.newaxis]/modr+rrTf/modr**3.
         self.u += u0
@@ -95,10 +97,52 @@ class Stokes:
         r = np.array([self.mX-r0[0], self.mY-r0[1]])
         modr=(r[0]**2+r[1]**2)**.5
         rer = 3*(r[0]*e[0]+r[1]*e[1])*r
-        doublet = rer/modr**5 - e[:,np.newaxis,np.newaxis]/modr**3
+        doublet = -rer/modr**5 + e[:,np.newaxis,np.newaxis]/modr**3
         usd, vsd = doublet
         self.u += usd
         self.v += vsd
+
+        """r = np.array([self.mX-r0[0], self.mY-r0[1]])
+        modr=(r[0]**2+r[1]**2)**.5
+        rer = 3*(r[0]*e[0]+r[1]*e[1])*r
+        doublet = rer/modr**5 - e[:,np.newaxis,np.newaxis]/modr**3
+        usd, vsd = doublet
+        self.u += usd
+        self.v += vsd"""
+
+    def source_dipole(self, r0):
+        M = np.array([1,0])
+        r=np.array([self.mX-r0[0], self.mY-r0[1]])
+        Id=np.array([[1,0],[0,1]])
+        IdM=np.dot(Id, M) 
+
+        rM=(r*M[:,np.newaxis,np.newaxis]).sum(axis=0)
+
+        rrM=(r*rM[np.newaxis,])
+
+        modr=(r[0]**2+r[1]**2)**.5
+        second = 3*rrM/modr**5
+
+        u0, v0 = IdM[:,np.newaxis,np.newaxis]/modr**3- second
+        self.u += u0
+        self.v += v0
+
+    def Stokes_dipole(self, e, r0):
+        Id=np.zeros([self.b ,self.b ])
+        for i in range(0,self.b ):
+            Id[i,i]=1
+        
+        r=np.array([self.mX-r0[0], self.mY-r0[1]])
+        modr=(r[0]**2+r[1]**2)**.5
+
+        Idr = np.dot(r, Id)
+
+        second = (3*(e[0]*r[0]+e[1]*r[1])**2)*r/modr**5
+
+        udip, vdip =   second - Idr/modr**3
+        self.u += udip
+        self.v += vdip
+    
 
     def add_colorbar(self, im, aspect=20, pad_fraction=0.5, **kwargs):
         """Add a vertical color bar to an image plot."""
@@ -124,6 +168,7 @@ class Stokes:
         plt.streamplot(self.mX, self.mY, self.u, self.v, 
                broken_streamlines=False, 
                density=0.3, 
+               #z jakiegoś powodu nie działa dla rotlet 0.3
                color='k'
                )
         
@@ -135,7 +180,7 @@ class Stokes:
          #      r'\frac{\mathbf{F}}{8 \pi \eta r } ( \mathds{1} + \frac{\mathbf{rr}}{r^2})$', fontsize=16, color='k')
 
     def __show__(self):
-        plt.savefig('right_one.png', bbox_inches='tight', pad_inches=0, dpi=400)
+        plt.savefig('stokes_dipole_along_x.pdf', bbox_inches='tight', pad_inches=0, dpi=400)
 
         plt.show()
         #plt.savefig('fafik.pdf', bbox_inches='tight', pad_inches=0, dpi=400)
