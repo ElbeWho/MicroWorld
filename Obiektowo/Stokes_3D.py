@@ -4,9 +4,6 @@ import matplotlib.pyplot as plt
 from scipy.integrate import ode
 from scipy.interpolate import RegularGridInterpolator as RGI
 
-
-
-
 class Equations3D:
 
     def __init__ (self, a: float, b: float, c: float):
@@ -17,9 +14,9 @@ class Equations3D:
 
         self.X, self.Y, self.Z = np.mgrid[a:b:c, a:b:c, a:b:c]
 
-        self.U = 0*self.X
-        self.V= 0*self.Y
-        self.W = 0*self.Z
+        self.U = 0.*self.X
+        self.V= 0.*self.Y
+        self.W = 0.*self.Z
 
 
     def int_params(self, max_step, step_size, n, Rsphere):
@@ -46,166 +43,110 @@ class Equations3D:
         self.U += u
         self.V += v
         self.W += w
-    
-    
 
-
-
-Ex, Ey, Ez = stokeslet(f, r0, X, Y, Z)
-
-    def dipole_Tylor(self, r0):
-
-        Id=np.zeros([self.b ,self.b ])
-        for i in range(0,self.b ):
-            Id[i,i]=1
         
-        r=np.array([self.mX-r0[0], self.mY-r0[1]])
+        self.Ui = RGI((self.X[:, 0, 0], self.Y[0, :, 0], self.Z[0, 0, :]), u, method='linear')
+        self.Vi = RGI((self.X[:, 0, 0], self.Y[0, :, 0], self.Z[0, 0, :]), v, method='linear')
+        self.Wi = RGI((self.X[:, 0, 0], self.Y[0, :, 0], self.Z[0, 0, :]), w, method='linear') 
     
-        Idr = np.dot(r, Id)
-        x2r = r*(r[1,:]**2)
-        modr=(r[0]**2+r[1]**2)**.5
-    
-        udip, vdip =   3*x2r/modr**5  - Idr/modr**3
-        self.u += udip
-        self.v += vdip
+    def IL3(self, t, coord):
+        xi, yi, zi = coord
+        try:
+            ex = self.Ui([xi, yi, zi])[0]
+            ey = self.Vi([xi, yi, zi])[0]
+            ez = self.Wi([xi, yi, zi])[0]
+        except:
+            return [0, 0, 0]
+        return [ex, ey, ez]
 
-    def dipole(self, r0, d, e):
-        r=np.array([self.mX-r0[0], self.mY-r0[1]])
-        modr=(r[0]**2+r[1]**2)**.5    
-        dwa =  -((d[0]*e[0]+d[1]*e[1])*r)/modr**3
-        trzy = 3*((e[0]*r[0]+e[1]*r[1])*(d[0]*r[0]+ d[1]*r[1])*r)/modr**5 
-        jeden = ((d[0]*r[0]+ d[1]*r[1])*e[:, np.newaxis, np.newaxis] - (e[0]*r[0]+e[1]*r[1])*d[:, np.newaxis, np.newaxis] )/modr**3
-        ud, vd = dwa+trzy+jeden
-        self.u += ud
-        self.v += vd
+
+    def start(self):
+        self.n = 5
+
+        self.space = np.linspace(-2.5, 2.5, self.n)
+
+        self.exes = np.zeros(self.n*self.n)
+        self.ezes = np.zeros(self.n*self.n)
+        self.eyes = np.zeros(self.n*self.n)
+
+        self.step = 0
+
+        self.exes = []
+        self.ezes = []
+        self.eyes = []
+
+        for i in range(0, self.n):
+            for k in range(0, self.n):
+                self.step = self.step +1
+
+            self.exes.append(self.space[i])
+            self.ezes.append(self.space[k])
+            self.eyes.append(-2.5)
+
+        self.xxx = np.zeros(self.n*self.n)
+        self.yyy = np.zeros(self.n*self.n)
+        self.zzz = np.zeros(self.n*self.n)
+
+        for i in range(0, self.n*self.n):
+            self.xxx[i] = self.exes[i]
+            self.yyy[i] = self.eyes[i]
+            self.zzz[i] = self.ezes[i]
         
+        self.places = np.vstack([self.xxx, self.yyy, self.zzz]).T
 
-    def stresslet(self, r0, d, e):     
-        r=np.array([self.mX-r0[0], self.mY-r0[1]])
-        modr=(r[0]**2+r[1]**2)**.5    
-        dwa =  -((d[0]*e[0]+d[1]*e[1])*r)/modr**3
-        trzy = 3*((e[0]*r[0]+e[1]*r[1])*(d[0]*r[0]+ d[1]*r[1])*r)/modr**5 
-        us, vs = dwa+trzy
-        self.u += us
-        self.v += vs
+    def simulate(self):
 
-    def rotlet(self, r0, d, e):
-        r = np.array([self.mX-r0[0], self.mY-r0[1]])
-        modr = (r[0]**2+r[1]**2)**.5 
-        jeden = ((d[0]*r[0]+ d[1]*r[1])*e[:, np.newaxis, np.newaxis] - (e[0]*r[0]+e[1]*r[1])*d[:, np.newaxis, np.newaxis] )/modr**3
-        ua, va = jeden
-        self.u += ua
-        self.v += va
+        self.ax = plt.figure().add_subplot(projection='3d')
 
-    def rotlet_R(self, r0, R):
-        r = np.array([self.mX-r0[0], self.mY-r0[1]])
-        modr = (r[0]**2+r[1]**2)**.5
-        ua = -(R[2]*r[1])/modr**3 
-        va = (R[2, np.newaxis, np.newaxis]*r[0])/modr**3
-        self.u += ua
-        self.v += va
+        dt = self.step_size
 
-    def source(self, r0):
-        r = np.array([self.mX-r0[0], self.mY-r0[1]])
-        modr=(r[0]**2+r[1]**2)**.5 
-        macierz = r/modr**3
-        ur, vr = macierz
-        self.u += ur
-        self.v += vr
+        self.xlist = []
+        self.ylist = []
+        self.zlist = []
+        for p in self.places:
 
-    def source_doublet(self, e, r0):
-        r = np.array([self.mX-r0[0], self.mY-r0[1]])
-        modr=(r[0]**2+r[1]**2)**.5
-        rer = 3*(r[0]*e[0]+r[1]*e[1])*r
-        doublet = -rer/modr**5 + e[:,np.newaxis,np.newaxis]/modr**3
-        usd, vsd = doublet
-        self.u += usd
-        self.v += vsd
+            r = ode(self.IL3)
+            r.set_integrator(self.integrmodel)
+            lx=[p[0]]
+            ly=[p[1]]
+            lz = [p[2]]
+            r.set_initial_value([lx[0], ly[0], lz[0]], 0)
 
-        """r = np.array([self.mX-r0[0], self.mY-r0[1]])
-        modr=(r[0]**2+r[1]**2)**.5
-        rer = 3*(r[0]*e[0]+r[1]*e[1])*r
-        doublet = rer/modr**5 - e[:,np.newaxis,np.newaxis]/modr**3
-        usd, vsd = doublet
-        self.u += usd
-        self.v += vsd"""
+            step = 0
+            abort = False
 
-    def source_dipole(self, r0):
-        M = np.array([1,0])
-        r=np.array([self.mX-r0[0], self.mY-r0[1]])
-        Id=np.array([[1,0],[0,1]])
-        IdM=np.dot(Id, M) 
+        while r.successful():
+            self.step += 1
 
-        rM=(r*M[:,np.newaxis,np.newaxis]).sum(axis=0)
+            r.integrate(r.t+dt)
+            x, y, z = r.y[0], r.y[1], r.y[2]
 
-        rrM=(r*rM[np.newaxis,])
+            lx.append(x)
+            ly.append(y)
+            lz.append(z)
+            self.xlist.append(x)
+            self.ylist.append(y)
+            self.zlist.append(z)
+      
+            if self.s >= x or self.e <= x or self.s >= y or self.e <= y or  self.s >= z or self.e <= z:
+                self.xlist.append(None)
+                self.ylist.append(None)
+                self.zlist.append(None)
+                break
 
-        modr=(r[0]**2+r[1]**2)**.5
-        second = 3*rrM/modr**5
+            if step >= self.max_step:
+                self.xlist.append(None)
+                self.ylist.append(None)
+                self.zlist.append(None) 
+                break
 
-        u0, v0 = IdM[:,np.newaxis,np.newaxis]/modr**3- second
-        self.u += u0
-        self.v += v0
+            if abort is True:
+                abort = False
+                self.xlist.append(None)
+                self.ylist.append(None)
+                self.zlist.append(None) 
+                break
 
-    def Stokes_dipole(self, e, r0):
-        Id=np.zeros([self.b ,self.b ])
-        for i in range(0,self.b ):
-            Id[i,i]=1
-        
-        r=np.array([self.mX-r0[0], self.mY-r0[1]])
-        modr=(r[0]**2+r[1]**2)**.5
-
-        Idr = np.dot(r, Id)
-
-        second = (3*(e[0]*r[0]+e[1]*r[1])**2)*r/modr**5
-
-        udip, vdip =   second - Idr/modr**3
-        self.u += udip
-        self.v += vdip
-    
-
-    def add_colorbar(self, im, aspect=20, pad_fraction=0.5, **kwargs):
-        """Add a vertical color bar to an image plot."""
-        current_ax = plt.gca()  # Get the current axes
-        divider = axes_grid1.make_axes_locatable(current_ax)
-        width = axes_grid1.axes_size.AxesY(current_ax, aspect=1. / aspect)
-        pad = axes_grid1.axes_size.Fraction(pad_fraction, width)
-        cax = divider.append_axes("right", size=width, pad=pad)
-        return im.axes.figure.colorbar(im, cax=cax, **kwargs)
-
-    def __plot__(self):
-        fig = plt.figure(figsize=(6,6),facecolor="w")
-        ax = plt.axes()
-        Z = np.sqrt(self.v**2+self.u**2)
-
-        self.image = ax.pcolormesh(self.mX, self.mY, Z,
-                #norm=colors.LogNorm(vmin= 10**(-1), vmax=10**1),
-                norm=colors.LogNorm(vmin=Z.min(), vmax=Z.max()),
-                snap=True,
-                cmap=plt.cm.inferno, rasterized=True, 
-                shading='gouraud', zorder=0)
-        
-        plt.streamplot(self.mX, self.mY, self.u, self.v, 
-               broken_streamlines=False, 
-               density=0.3, 
-               #z jakiegoś powodu nie działa dla rotlet 0.3
-               color='k'
-               )
-        
-        self.add_colorbar(self.image)
-
-       
-
-        #self.image = ax.set_title(r'$\displaystyle\\v(r)='
-         #      r'\frac{\mathbf{F}}{8 \pi \eta r } ( \mathds{1} + \frac{\mathbf{rr}}{r^2})$', fontsize=16, color='k')
-
-    def __show__(self):
-        plt.savefig('stokes_dipole_along_x.pdf', bbox_inches='tight', pad_inches=0, dpi=400)
+        plt.plot(lx, ly, lz,  'k', lw=0.5)
 
         plt.show()
-        #plt.savefig('fafik.pdf', bbox_inches='tight', pad_inches=0, dpi=400)
-        
-    #def save_plot(self):
-     #    plt.savefig('whatttt.pdf', bbox_inches='tight', pad_inches=0, dpi=400)
-
-

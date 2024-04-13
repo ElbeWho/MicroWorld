@@ -24,7 +24,7 @@ class Equations2D:
 
         ---------
             
-            Velocity values prepared to be used at the end of the definition:
+        Velocity values prepared to be used at the end of the definition:
             u: values of velocity in the x direction
             v: values of velocity in the y direction
         """

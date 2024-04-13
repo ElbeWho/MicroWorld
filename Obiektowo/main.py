@@ -1,14 +1,16 @@
 import numpy as np
 import Stokes_2D #importing software
+import Stokes_3D 
 #using class Stokes form MicroWorls
-plot = Stokes_2D.Equations2D(5, 100) 
-#radiuses and distance d
-r0 = np.array([0,0])
 
-#adding choosen characteristic solutions
-R = np.array([1, 0])
-plot.Stokes_dipole( R, r0)
+r0 = np.array([0,0,0])
+f = np.array([0, 1, 0])
 
-plot.__plot__()
-plot.__show__()
 
+
+plot = Stokes_3D.Equations3D(5, 5, 5) 
+plot.int_params(1000, 0.01, 10, 0.1)
+plot. stokeslet(r0, f)
+
+plot.start()
+plot.simulate()
