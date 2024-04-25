@@ -11,6 +11,7 @@ plot = Stokes_3D.Equations3D(-4, 4, 0.05)
 
 plot_review = Stokes_2D.Equations2D(4, 4, 100)
 plot_review.rotlet_R(r0, R)
+plot_review.source_dipole()
 
 plot_review.__plot__()
 plot_review.__show__()

@@ -108,7 +108,6 @@ class Equations2D:
         Antysymmetric part of dipole velocity field.
         Equation:
         u(r; F, d) = [(d x F) x r]/r^3
-
         Arguments:
             r0: position of the force
             F: direction and magnitude of the force
@@ -127,7 +126,6 @@ class Equations2D:
         interpretation of the vector product R = d x F as torque. 
         Equation:
         u(r; R) = [R x r]/r^3
-
         Arguments:
             r0: position of the force
             R: torque acting at the origin
@@ -144,7 +142,6 @@ class Equations2D:
         Symmetric part of dipole velocity field.
         Equation:
         u(r; F, d) = - [(d.F)r]/r^3 + [3(F.r)(d.r)r]/r^5
-
         Arguments:
             r0: position of the force
             F: direction and magnitude of the force
@@ -166,7 +163,6 @@ class Equations2D:
         where M is the source magnitude.
         Equation:
         u(r) = Mr/(4πr^3)
-
         Arguments:
             r0: position of the force
             M: magnitude of a source
@@ -183,7 +179,6 @@ class Equations2D:
         It is a source and a sink merging together.
         Equation:
         u(r; M) = 1/(4π) [1/r^3 + (3rr)/r^5] M
-
         Arguments:
             r0: position of the force
             M: strenght of the dipole
