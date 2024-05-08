@@ -4,16 +4,19 @@ import matplotlib.colors as colors
 import matplotlib.cbook as cbook
 from matplotlib import cm
 from mpl_toolkits import axes_grid1
+from scipy.integrate import ode
+from scipy.interpolate import RegularGridInterpolator as RGI
 
 class Equations2D:
     """ 
     Stokes equation is relevant for the regime where Reynold's number Re << 1.
-    This module provides ploting on meshgrid choosen singularity equations. 
+    This module provides ploting on meshgrid choosen singularity equations.
+    It is possible to use build-in matplotlib function of streamlines or solve those by interpolating.
     """
     
     def __init__ (self, a: float, b: float, steps: float):
         """
-        To initialize an object from this class size of the plot must be specified.
+        To initialize an object from this class, size of the plot must be specified.
 
         Arguments:
             a: lenght of the plot
@@ -28,12 +31,17 @@ class Equations2D:
         """
         self.a = a
         self.b = b
-        self.steps = steps
-        xx = np.linspace(-a, a, steps)
-        yy = np.linspace(-b, b, steps)
+
+        """xx = np.linspace(self.a, self.b, steps)
+        yy = np.linspace(self.a, self.b, steps)
         self.mX, self.mY = np.meshgrid(xx,yy)
         self.u = np.zeros(self.mX.shape)
-        self.v = np.zeros(self.mY.shape)
+        self.v = np.zeros(self.mY.shape)"""
+        self.mX, self.mY = np.mgrid[a:b:steps, a:b:steps]
+        self.u = 0.*self.mX
+        self.v = 0.*self.mY 
+        #zeby dzialalo na mgrid trzeba jakos pozbyc sie zera
+        
 
     def stokeslet(self, r0: np.ndarray, F: np.ndarray):
         """
@@ -114,9 +122,10 @@ class Equations2D:
             d: distance between forces 
 
         """
+        e = F/(F[0]**2+F[1]**2)**.5
         r = np.array([self.mX-r0[0], self.mY-r0[1]])
         modr = (r[0]**2+r[1]**2)**.5 
-        ua, va = ((d[0]*r[0]+ d[1]*r[1])*F[:, np.newaxis, np.newaxis] - (e[0]*r[0]+e[1]*r[1])*d[:, np.newaxis, np.newaxis] )/modr**3
+        ua, va = ((d[0]*r[0]+ d[1]*r[1])*e[:, np.newaxis, np.newaxis] - (e[0]*r[0]+e[1]*r[1])*d[:, np.newaxis, np.newaxis] )/modr**3
         self.u += ua
         self.v += va
         
@@ -196,7 +205,71 @@ class Equations2D:
         self.v += v0
 
         ##--------------- tutaj będzie ścianka --------
+        
+    
+    def streamlines(self):
 
+        ui = RGI((self.mX[:, 0],self.mY[0, :]), self.u, method='linear')
+        vi = RGI((self.mX[:, 0], self.mY[0, :]), self.v, method='linear')
+
+        integrmodel = 'vode' # 'lsoda', 'dopri5', 'dop853'
+        max_step = 2000
+        step_size = 0.01
+        fig, ax = plt.subplots()
+        dt = step_size
+
+        def Intergrate_Line(t, coord):
+            # Function calculating Efield in every point for integrator
+            global abort
+            xi = coord[0]
+            yi = coord[1]
+            try:
+                ex = ui([xi, yi])[0]
+                ey = vi([xi, yi])[0]
+                print(ui([xi, yi])[0])
+            except:
+                abort = True
+                return [False, False]
+            n = (ex**2+ey**2)**0.5
+            return [ex/n, ey/n]
+
+        xstart = np.linspace(-3.9, 3.9, 21)
+
+        ystart = np.linspace(-3.9, -3.9, 21)
+        places=np.vstack([xstart,ystart]).T
+
+        for p in places:
+            print("here")
+            r = ode(Intergrate_Line)
+            print("hree2")
+            r.set_integrator(integrmodel)
+            print("hree3")
+            lx=[p[0]]
+            ly=[p[1]]
+
+            r.set_initial_value([lx[0], ly[0]], 0)
+
+            step = 0
+            while r.successful():
+                
+                step += 1
+                r.integrate(r.t+dt)
+                x, y = r.y[0], r.y[1]
+
+                lx.append(x)
+                ly.append(y)
+                
+                if self.a >= x or self.b <= x or self.a >= y or self.b <= y or \
+                    step >= max_step:
+                    break
+                if step >= max_step:
+                    
+                    plt.plot(lx, ly, 'r') 
+                else:
+                    plt.plot(lx, ly, 'k')
+
+        print("end now")
+        
 
     def add_colorbar(self, im, aspect=20, pad_fraction=0.5, **kwargs):
         """Add a vertical color bar to an image plot."""
@@ -208,6 +281,7 @@ class Equations2D:
         return im.axes.figure.colorbar(im, cax=cax, **kwargs)
 
     def __plot__(self):
+        
         plt.rcParams['text.usetex'] = True
         plt.rcParams.update({
                             'font.size': 28,
@@ -217,15 +291,17 @@ class Equations2D:
         fig = plt.figure(figsize=(8,8),facecolor="w")
         ax = plt.axes()
         Z = np.sqrt(self.v**2+self.u**2)
-
+        
+        
         self.image = ax.pcolormesh(self.mX, self.mY, Z,
                 norm=colors.LogNorm(vmin= 10**(-2), vmax=10**1),
                 #norm=colors.LogNorm(vmin=Z.min(), vmax=Z.max()),
                 snap=True,
                 cmap=plt.cm.inferno, rasterized=True, 
                 shading='gouraud', zorder=0)
-        
-        plt.streamplot(self.mX, self.mY, self.u, self.v, 
+
+
+        plt.streamplot(self.mX.T, self.mY.T, self.u, self.v, 
                broken_streamlines=False, 
                density=0.35, 
                #z jakiegoś powodu nie działa dla rotlet 0.3
