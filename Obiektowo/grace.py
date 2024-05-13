@@ -89,3 +89,10 @@ for p in places:
             plt.plot(lx, ly, 'k')
 print("click me now")
 plt.show()
+"""if function == 'plot':
+            self.steps = steps
+            xx = np.linspace(self.a, self.b, steps)
+            yy = np.linspace(self.a, self.b, steps)
+            self.mX, self.mY = np.meshgrid(xx,yy)
+            self.u = np.zeros(self.mX.shape)
+            self.v = np.zeros(self.mY.shape)"""

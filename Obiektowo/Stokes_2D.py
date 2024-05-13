@@ -14,7 +14,7 @@ class Equations2D:
     It is possible to use build-in matplotlib function of streamlines or solve those by interpolating.
     """
     
-    def __init__ (self, a: float, b: float, steps: float):
+    def __init__ (self, a: float, b: float, steps: float, function: str):
         """
         To initialize an object from this class, size of the plot must be specified.
 
@@ -31,16 +31,28 @@ class Equations2D:
         """
         self.a = a
         self.b = b
+        self.flag = function 
+        
 
-        """xx = np.linspace(self.a, self.b, steps)
-        yy = np.linspace(self.a, self.b, steps)
-        self.mX, self.mY = np.meshgrid(xx,yy)
-        self.u = np.zeros(self.mX.shape)
-        self.v = np.zeros(self.mY.shape)"""
-        self.mX, self.mY = np.mgrid[a:b:steps, a:b:steps]
-        self.u = 0.*self.mX
-        self.v = 0.*self.mY 
-        #zeby dzialalo na mgrid trzeba jakos pozbyc sie zera
+        
+
+        if self.flag == 'free':
+            self.mX, self.mY = np.mgrid[a:b:steps, a:b:steps]
+            self.steps = self.mX.shape[0]
+            self.u = 0.*self.mX
+            self.v = 0.*self.mY 
+            print(self.steps)
+        
+        if self.flag == 'wall':
+            self.mX, self.mY = np.mgrid[a:b:steps, -0.2:b:steps]
+            self.steps = self.mX.shape[0]
+            self.u = 0.*self.mX
+            self.v = 0.*self.mY 
+            print(self.steps)
+
+        
+        else:
+            print("Possible functions are plot and export")
         
 
     def stokeslet(self, r0: np.ndarray, F: np.ndarray):
@@ -64,6 +76,8 @@ class Equations2D:
         u0, v0 =Idf[:,np.newaxis,np.newaxis]/modr+rrTF/modr**3.
         self.u += u0
         self.v += v0
+
+        #teraz to trzeba tak przerobic zeby stokeslet nie byl voidem
 
 
     def dipole(self, r0: np.ndarray, F: np.ndarray, d: np.ndarray):
@@ -100,10 +114,22 @@ class Equations2D:
             F: direction and magnitude of the force
         """
         e = F/(F[0]**2+F[1]**2)**.5
-        Id=np.zeros([self.steps ,self.steps ])
-        for i in range(0,self.steps ):
+        
+        first_size = self.u.shape[0]
+        second_size = self.u.shape[1]
+        Id=np.zeros([second_size, first_size ])
+        for i in range(0, second_size):
             Id[i,i]=1
+        
         r=np.array([self.mX-r0[0], self.mY-r0[1]])
+        
+
+        print("here my dear: ", first_size)
+
+        print(r.shape)
+
+
+        #---the famous rest
         modr=(r[0]**2+r[1]**2)**.5
         Idr = np.dot(r, Id)
         second_term = (3*(e[0]*r[0]+e[1]*r[1])**2)*r/modr**5
@@ -205,6 +231,42 @@ class Equations2D:
         self.v += v0
 
         ##--------------- tutaj będzie ścianka --------
+
+    def free_suf_par(self, r0, Fpar):
+        Frel = np.array([Fpar[0], 0])
+        print(Frel)
+        self.stokeslet(r0, Frel)
+        Fim = np.array([Fpar[0], 0])
+        self.stokeslet(-r0, Fim)
+
+    def free_suf_per(self, r0, Fper):
+        Frel = np.array([0, Fper[0]])
+        print(Frel)
+        self.stokeslet(r0, Frel)
+        self.stokeslet(-r0, -Frel)
+
+    def hard_wall_par(self, r0, Fpar):
+        Frel = np.array([Fpar[0], 0])
+        #--real
+        self.stokeslet(r0, Frel)
+        #--image
+        self.stokeslet(-r0, -Frel)
+        r1 = -2*r0
+        self.stokes_dipole(r1, Frel)
+        r2 = -2*r0**2
+        self.source_dipole(r2, Frel)
+
+    def free_suf_per(self, r0, Fper):
+        Frel = np.array([Fper[0], 0])
+        #--real
+        self.stokeslet(r0, Frel)
+        #--image
+        self.stokeslet(-r0, -Frel)
+        r1 = -2*r0
+        self.stokes_dipole(r1, -Frel)
+        r2 = -2*r0**2
+        self.source_dipole(r2, Frel)
+
         
     
     def streamlines(self):
@@ -288,12 +350,19 @@ class Equations2D:
                             'text.usetex': True,
                             'text.latex.preamble': r'\usepackage{dsfont}'
                             })
-        fig = plt.figure(figsize=(8,8),facecolor="w")
+        
+        if self.flag == "free":
+
+            fig = plt.figure(figsize=(8,8),facecolor="w")
+        
+        if self.flag == "wall":
+            fig = plt.figure(figsize=(8,4),facecolor="w")
+
         ax = plt.axes()
         Z = np.sqrt(self.v**2+self.u**2)
         
         
-        self.image = ax.pcolormesh(self.mX, self.mY, Z,
+        self.image = ax.pcolormesh(self.mX.T, self.mY.T, Z.T,
                 norm=colors.LogNorm(vmin= 10**(-2), vmax=10**1),
                 #norm=colors.LogNorm(vmin=Z.min(), vmax=Z.max()),
                 snap=True,
@@ -301,14 +370,18 @@ class Equations2D:
                 shading='gouraud', zorder=0)
 
 
-        plt.streamplot(self.mX.T, self.mY.T, self.u, self.v, 
+        plt.streamplot(self.mX.T, self.mY.T, self.u.T, self.v.T, 
                broken_streamlines=False, 
-               density=0.35, 
+               density=0.38, 
                #z jakiegoś powodu nie działa dla rotlet 0.3
                color='k'
                )
         
+        if self.flag == "wall":
+            plt.axhline(linewidth=8, y = -0.1, color=(0.5, 0.5, 0.5), linestyle = '-')
+        
         self.add_colorbar(self.image)
+        plt.savefig('trur.pdf', dpi=200)
 
     
     def __show__(self):
