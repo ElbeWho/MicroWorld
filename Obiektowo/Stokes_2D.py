@@ -29,33 +29,38 @@ class Equations2D:
             u: values of velocity in the x direction
             v: values of velocity in the y direction
         """
-        self.a = a
-        self.b = b
+        
         self.flag = function 
-        
+        #słabe rozwiązanie z 'command' --> do przemyślenia
 
-        
+        command = True
 
         if self.flag == 'free':
+            self.a = a
+            self.b = b
             self.mX, self.mY = np.mgrid[a:b:steps, a:b:steps]
             self.steps = self.mX.shape[0]
             self.u = 0.*self.mX
             self.v = 0.*self.mY 
             print(self.steps)
+            command = False
         
         if self.flag == 'wall':
-            self.mX, self.mY = np.mgrid[a:b:steps, -0.2:b:steps]
+            self.a = a - 0.4
+            self.mX, self.mY = np.mgrid[self.a:b:steps, -0.2:b:0.005]
+            print("mx: ", self.mX.shape)
+            print("my: ", self.mY.shape)
+            print("a: ", self.a)
             self.steps = self.mX.shape[0]
             self.u = 0.*self.mX
             self.v = 0.*self.mY 
-            print(self.steps)
-
-        
-        else:
+            command = False
+            
+        if command == True:
             print("Possible functions are plot and export")
         
 
-    def stokeslet(self, r0: np.ndarray, F: np.ndarray):
+    def stokeslet(self, r0: np.ndarray, F: np.ndarray, coef = 1):
         """
         The fundamental sullution to the Stokes' equation with one point force applied
         is called Stokeslet.
@@ -74,13 +79,13 @@ class Equations2D:
         rrTF=(r*rTF[np.newaxis,])
         modr=(r[0]**2+r[1]**2)**.5
         u0, v0 =Idf[:,np.newaxis,np.newaxis]/modr+rrTF/modr**3.
-        self.u += u0
-        self.v += v0
+        self.u += u0*coef
+        self.v += v0*coef
 
         #teraz to trzeba tak przerobic zeby stokeslet nie byl voidem
 
 
-    def dipole(self, r0: np.ndarray, F: np.ndarray, d: np.ndarray):
+    def dipole(self, r0: np.ndarray, F: np.ndarray, d: np.ndarray, coef = 1):
         """
         The first term of Tylor series for a Stokeslet at r with d beeing distance between two forces
         in opposite directions.
@@ -99,10 +104,10 @@ class Equations2D:
         second_term =  -((d[0]*e[0]+d[1]*e[1])*r)/modr**3
         third_term = 3*((e[0]*r[0]+e[1]*r[1])*(d[0]*r[0]+ d[1]*r[1])*r)/modr**5 
         ud, vd = first_term  + second_term + third_term 
-        self.u += ud
-        self.v += vd
+        self.u += ud*coef
+        self.v += vd*coef
 
-    def stokes_dipole(self, r0: np.ndarray, F: np.ndarray):
+    def stokes_dipole(self, r0: np.ndarray, F: np.ndarray, coef = 1):
         """
         Dipole with stress tensor that is traceless and axisimetric. Both vector units of d and F are
         identical. This represents swimming flagellated bacteria.
@@ -117,27 +122,25 @@ class Equations2D:
         
         first_size = self.u.shape[0]
         second_size = self.u.shape[1]
+
         Id=np.zeros([second_size, first_size ])
         for i in range(0, second_size):
             Id[i,i]=1
-        
-        r=np.array([self.mX-r0[0], self.mY-r0[1]])
-        
 
-        print("here my dear: ", first_size)
+        
+        r=np.array([self.mX-r0[0], self.mY-r0[1]]) 
 
-        print(r.shape)
 
 
         #---the famous rest
         modr=(r[0]**2+r[1]**2)**.5
-        Idr = np.dot(r, Id)
+        Idr = np.dot(r, Id) 
         second_term = (3*(e[0]*r[0]+e[1]*r[1])**2)*r/modr**5
         udip, vdip =    (-1)*Idr/modr**3  + second_term
-        self.u += udip
-        self.v += vdip
+        self.u += udip*coef
+        self.v += vdip*coef
 
-    def rotlet(self, r0: np.ndarray, F: np.ndarray, d: np.ndarray):
+    def rotlet(self, r0: np.ndarray, F: np.ndarray, d: np.ndarray, coef = 1):
         """
         Antysymmetric part of dipole velocity field.
         Equation:
@@ -152,10 +155,10 @@ class Equations2D:
         r = np.array([self.mX-r0[0], self.mY-r0[1]])
         modr = (r[0]**2+r[1]**2)**.5 
         ua, va = ((d[0]*r[0]+ d[1]*r[1])*e[:, np.newaxis, np.newaxis] - (e[0]*r[0]+e[1]*r[1])*d[:, np.newaxis, np.newaxis] )/modr**3
-        self.u += ua
-        self.v += va
+        self.u += ua*coef
+        self.v += va*coef
         
-    def rotlet_R(self, r0: np.ndarray, R: np.ndarray):
+    def rotlet_R(self, r0: np.ndarray, R: np.ndarray, coef = 1):
         """
         Antysymmetric part of dipole velocity field with
         interpretation of the vector product R = d x F as torque. 
@@ -169,10 +172,10 @@ class Equations2D:
         modr = (r[0]**2+r[1]**2)**.5
         ua = -(R[2]*r[1])/modr**3 
         va = (R[2, np.newaxis, np.newaxis]*r[0])/modr**3
-        self.u += ua
-        self.v += va
+        self.u += ua*coef
+        self.v += va*coef
 
-    def stresslet(self, r0: np.ndarray, F: np.ndarray, d: np.ndarray,):
+    def stresslet(self, r0: np.ndarray, F: np.ndarray, d: np.ndarray, coef = 1):
         """
         Symmetric part of dipole velocity field.
         Equation:
@@ -188,10 +191,10 @@ class Equations2D:
         dwa =  -((d[0]*e[0]+d[1]*e[1])*r)/modr**3
         trzy = 3*((e[0]*r[0]+e[1]*r[1])*(d[0]*r[0]+ d[1]*r[1])*r)/modr**5 
         us, vs = dwa+trzy
-        self.u += us
-        self.v += vs
+        self.u += us*coef
+        self.v += vs*coef
 
-    def source(self, r0: np.ndarray, M: float):
+    def source(self, r0: np.ndarray, M: float, coef=1):
         """
         Velocity field for a given logarytmic potental:
         φ(r) = M/(2π) ln(r),
@@ -205,10 +208,10 @@ class Equations2D:
         r = np.array([self.mX-r0[0], self.mY-r0[1]])
         modr=(r[0]**2+r[1]**2)**.5 
         ur, vr  = M*r/modr**3
-        self.u += ur
-        self.v += vr
+        self.u += ur*coef
+        self.v += vr*coef
 
-    def source_dipole(self, r0: np.ndarray, M: np.ndarray):
+    def source_dipole(self, r0: np.ndarray, M: np.ndarray, coef = 1):
         """
         Velocity field for a source dipole, also called source doublet.
         It is a source and a sink merging together.
@@ -218,7 +221,6 @@ class Equations2D:
             r0: position of the force
             M: strenght of the dipole
         """
-        M = np.array([0,1])
         r=np.array([self.mX-r0[0], self.mY-r0[1]])
         Id=np.array([[1,0],[0,1]])
         IdM=np.dot(Id, M) 
@@ -227,45 +229,76 @@ class Equations2D:
         modr=(r[0]**2+r[1]**2)**.5
         second = 3*rrM/modr**5
         u0, v0 = IdM[:,np.newaxis,np.newaxis]/modr**3- second
-        self.u += u0
-        self.v += v0
+        self.u += u0*coef
+        self.v += v0*coef
 
         ##--------------- tutaj będzie ścianka --------
 
-    def free_suf_par(self, r0, Fpar):
+    def free_suf_par(self, r0, Fpar, coef = 1):
+        #to jest git
         Frel = np.array([Fpar[0], 0])
-        print(Frel)
-        self.stokeslet(r0, Frel)
-        Fim = np.array([Fpar[0], 0])
-        self.stokeslet(-r0, Fim)
+        erel = Frel/(Frel[0]**2+Frel[1]**2)*.5
+        self.stokeslet(r0, erel, coef)
+        eim = erel
+        self.stokeslet(-r0, eim, coef)
 
-    def free_suf_per(self, r0, Fper):
+    def free_suf_per(self, r0, Fper, coef=1):
+        #to jest git tez
         Frel = np.array([0, Fper[0]])
-        print(Frel)
-        self.stokeslet(r0, Frel)
-        self.stokeslet(-r0, -Frel)
+        erel = Frel/(Frel[0]**2+Frel[1]**2)*.5
+        self.stokeslet(r0, erel, coef)
+        self.stokeslet(-r0, -erel, coef)
 
-    def hard_wall_par(self, r0, Fpar):
-        Frel = np.array([Fpar[0], 0])
+    def hard_wall_par(self, r0, Fpar ):
+
+        ex = np.array([1, 0])
+        ey = np.array([0, 1])
+
+        h = r0[1]
+        rim =np.array([r0[0], -r0[1]])
+        coef1 = 2*h
+        coef2 = -2*h**2
+        d = np.array([1,0])
+        radd = np.array([-r0[1], r0[0]])
+        Frel = np.array([1, 0])
+        Fadd = np.array([0, 1])
+        
         #--real
-        self.stokeslet(r0, Frel)
+        self.stokeslet(r0, Frel) 
         #--image
-        self.stokeslet(-r0, -Frel)
-        r1 = -2*r0
-        self.stokes_dipole(r1, Frel)
-        r2 = -2*r0**2
-        self.source_dipole(r2, Frel)
+        self.stokeslet(rim, Frel, coef=-1 ) 
+        self.dipole(rim, Fadd, d, coef=coef1)
+        self.source_dipole(rim, -Frel, coef=coef2)
 
-    def free_suf_per(self, r0, Fper):
+    def hard_wall_per(self, r0, Fper, ratio):
+        versors = r0/(r0[0]**2+r0[1]**2)*.5
+        ex = np.array([versors[0], 0])
+        ey = np.array([0, versors[1]])
+        h = r0[1] #as a scalar
+
         Frel = np.array([Fper[0], 0])
         #--real
         self.stokeslet(r0, Frel)
         #--image
-        self.stokeslet(-r0, -Frel)
-        r1 = -2*r0
-        self.stokes_dipole(r1, -Frel)
-        r2 = -2*r0**2
-        self.source_dipole(r2, Frel)
+        self.stokeslet(-r0, -Frel, coef=coef1)
+        self.stokes_dipole(-r0, -Frel, coef=coef2)
+        self.source_dipole(-r0, -Frel, coef=coef3)
+    
+    def totality(self, r0, Fper, ratio):
+
+        ex = np.array([1, 0])
+        ey = np.array([0, 1])
+        h = r0[1]
+        coef1 = (1-ratio)/(1+ratio)
+        coef2 = (2*ratio*h)/(ratio+1)
+        coef3 = -1*(2*ratio*h**2)/(ratio + 1)
+        Frel = np.array([Fpar[0], 0])
+        
+        #--real
+        self.stokeslet(ex, Frel)
+        #--image
+        self.stokeslet(-ex, -Frel, coef=coef1 )
+        self.dipole(-ex, -Frel, -ey, coef=coef2)
 
         
     
@@ -353,7 +386,7 @@ class Equations2D:
         
         if self.flag == "free":
 
-            fig = plt.figure(figsize=(8,8),facecolor="w")
+            fig = plt.figure(figsize=(6,6),facecolor="w")
         
         if self.flag == "wall":
             fig = plt.figure(figsize=(8,4),facecolor="w")
@@ -363,7 +396,7 @@ class Equations2D:
         
         
         self.image = ax.pcolormesh(self.mX.T, self.mY.T, Z.T,
-                norm=colors.LogNorm(vmin= 10**(-2), vmax=10**1),
+                norm=colors.LogNorm(vmin= 10**(-3), vmax=10**1),
                 #norm=colors.LogNorm(vmin=Z.min(), vmax=Z.max()),
                 snap=True,
                 cmap=plt.cm.inferno, rasterized=True, 
@@ -381,7 +414,7 @@ class Equations2D:
             plt.axhline(linewidth=8, y = -0.1, color=(0.5, 0.5, 0.5), linestyle = '-')
         
         self.add_colorbar(self.image)
-        plt.savefig('trur.pdf', dpi=200)
+        plt.savefig('wall.png', dpi=200)
 
     
     def __show__(self):
