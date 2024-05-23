@@ -31,6 +31,7 @@ class Equations2D:
         """
         
         self.flag = function 
+        self.arrows = []
         #słabe rozwiązanie z 'command' --> do przemyślenia
 
         command = True
@@ -52,19 +53,14 @@ class Equations2D:
             self.u = 0.*self.mX
             self.v = 0.*self.mY 
             command = False
+            self.fig, self.ax = plt.subplots()
             
         if command == True:
-            print("Possible functions are plot and export")
+            print("Possible boundary conditions are 'free' and 'wall'.")
         
 
     def stokeslet(self, r0: np.ndarray, F: np.ndarray, coef = 1):
         """
-        The fundamental sullution to the Stokes' equation with one point force applied
-        is called Stokeslet.
-        Point force defined as F = (8ηπr)δ(r)
-        Equation:
-        u(r)  = F(1 + r.r/|r|^2)
-
         Arguments:
             r0: position of the force
             F: direction and magnitude of the force
@@ -78,17 +74,13 @@ class Equations2D:
         u0, v0 =Idf[:,np.newaxis,np.newaxis]/modr+rrTF/modr**3.
         self.u += u0*coef
         self.v += v0*coef
+        self.arrows.append([r0[0], r0[1], F[0], F[1]])
 
         #teraz to trzeba tak przerobic zeby stokeslet nie byl voidem
 
 
     def dipole(self, r0: np.ndarray, F: np.ndarray, d: np.ndarray, coef = 1):
         """
-        The first term of Tylor series for a Stokeslet at r with d beeing distance between two forces
-        in opposite directions.
-        Equation:
-        u(r; F, d) = [(d x F) x r]/r^3 - [(d.F)r]/r^3 + [3(F.r)(d.r)r]/r^5
-        
         Arguments:
             r0: position of the force
             F: direction and magnitude of the force
@@ -106,11 +98,6 @@ class Equations2D:
 
     def stokes_dipole(self, r0: np.ndarray, F: np.ndarray, coef = 1):
         """
-        Dipole with stress tensor that is traceless and axisimetric. Both vector units of d and F are
-        identical. This represents swimming flagellated bacteria.
-        Equation:
-        e = F/|F|
-        u(r; S) = [-1/r^3 + (3(e.r)^2)/r^5]r
         Arguments:
             r0: position of force
             F: direction and magnitude of the force
@@ -139,9 +126,6 @@ class Equations2D:
 
     def rotlet(self, r0: np.ndarray, F: np.ndarray, d: np.ndarray, coef = 1):
         """
-        Antysymmetric part of dipole velocity field.
-        Equation:
-        u(r; F, d) = [(d x F) x r]/r^3
         Arguments:
             r0: position of the force
             F: direction and magnitude of the force
@@ -157,10 +141,6 @@ class Equations2D:
         
     def rotlet_R(self, r0: np.ndarray, R: np.ndarray, coef = 1):
         """
-        Antysymmetric part of dipole velocity field with
-        interpretation of the vector product R = d x F as torque. 
-        Equation:
-        u(r; R) = [R x r]/r^3
         Arguments:
             r0: position of the force
             R: torque acting at the origin
@@ -174,9 +154,6 @@ class Equations2D:
 
     def stresslet(self, r0: np.ndarray, F: np.ndarray, d: np.ndarray, coef = 1):
         """
-        Symmetric part of dipole velocity field.
-        Equation:
-        u(r; F, d) = - [(d.F)r]/r^3 + [3(F.r)(d.r)r]/r^5
         Arguments:
             r0: position of the force
             F: direction and magnitude of the force
@@ -193,11 +170,6 @@ class Equations2D:
 
     def source(self, r0: np.ndarray, M: float, coef=1):
         """
-        Velocity field for a given logarytmic potental:
-        φ(r) = M/(2π) ln(r),
-        where M is the source magnitude.
-        Equation:
-        u(r) = Mr/(4πr^3)
         Arguments:
             r0: position of the force
             M: magnitude of a source
@@ -210,10 +182,6 @@ class Equations2D:
 
     def source_dipole(self, r0: np.ndarray, M: np.ndarray, coef = 1):
         """
-        Velocity field for a source dipole, also called source doublet.
-        It is a source and a sink merging together.
-        Equation:
-        u(r; M) = 1/(4π) [1/r^3 + (3rr)/r^5] M
         Arguments:
             r0: position of the force
             M: strenght of the dipole
@@ -314,7 +282,20 @@ class Equations2D:
         self.dipole(rim, Frel, d, coef=coef1)
         self.source_dipole(rim, -Frel, coef=coef2)
     
-    def streamlines(self, xstart, ystart, mesh = False):
+    def streamlines(self, xstart, ystart, mesh = False, arrows=False):
+
+        plt.rcParams['text.usetex'] = True
+        plt.rcParams.update({
+                            'font.size': 18,
+                            'text.usetex': True,
+                            'text.latex.preamble': r'\usepackage{dsfont}'
+                            })
+
+        if self.flag == "free":
+            fig = plt.figure(figsize=(6,6),facecolor="w")
+        
+        elif self.flag == "wall":
+            fig = plt.figure(figsize=(8,4),facecolor="w")
 
         if mesh == True:
             ax = plt.axes()
@@ -376,15 +357,19 @@ class Equations2D:
                     step >= max_step:
                     break
                 if step >= max_step:
-                    
                     ax.plot(lx, ly, 'r') 
                 else:
                     ax.plot(lx, ly, 'k')
-        
+
+        if arrows == True:
+
+            for i in range(0, len(self.arrows)):
+                ax.arrow( self.arrows[i][0], self.arrows[i][1], self.arrows[i][2], self.arrows[i][3], length_includes_head=True,
+                      head_width=.15, color="y", zorder=5)
+        else:
+            pass
         
         plt.savefig('wallfromanotherplanet.png', dpi=200)
-
-
         print("end now")
         
 
@@ -397,7 +382,7 @@ class Equations2D:
         cax = divider.append_axes("right", size=width, pad=pad)
         return im.axes.figure.colorbar(im, cax=cax, **kwargs)
 
-    def __plot__(self):
+    def __plot__(self, arrows = False, title = 'pass'):
         
         plt.rcParams['text.usetex'] = True
         plt.rcParams.update({
@@ -409,8 +394,10 @@ class Equations2D:
         if self.flag == "free":
             fig = plt.figure(figsize=(6,6),facecolor="w")
         
-        if self.flag == "wall":
+        elif self.flag == "wall":
             fig = plt.figure(figsize=(8,4),facecolor="w")
+        else:
+            print("Error in boundary conditions.")
 
         ax = plt.axes()
         Z = np.sqrt(self.v**2+self.u**2)
@@ -428,24 +415,32 @@ class Equations2D:
                broken_streamlines=False, 
                density=0.38, 
                #z jakiegoś powodu nie działa dla rotlet 0.3
-               color='k'
-               )
+               color='k')
         
         if self.flag == "wall":
             plt.axhline(linewidth=8, y = -0.1, color=(0.5, 0.5, 0.5), linestyle = '-')
+        else:
+            pass
         
         self.add_colorbar(self.image)
-        plt.savefig('wall.png', dpi=200)
+
+        if title != 'pass':
+            plt.savefig(title, dpi=200)
+        else:
+            pass
+
+    
+        if arrows == True:
+
+            for i in range(0, len(self.arrows)):
+                ax.arrow( self.arrows[i][0], self.arrows[i][1], self.arrows[i][2], self.arrows[i][3], length_includes_head=True,
+                      head_width=.15, color="y", zorder=5)
+        else:
+            pass
 
     
     def __show__(self):
         plt.show()
         
-    def save_plot(self, title: str):
-        """
-        Arguments:
-            title: title of the plot
-        """
-        plt.savefig(title + '.pdf', dpi=200)
 
 

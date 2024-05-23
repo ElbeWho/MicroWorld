@@ -15,5 +15,6 @@ plot_review = Stokes_2D.Equations2D(-4, 4, 0.01, "free")
 xstart = np.linspace(-3.9, 3.9, 21)
 ystart = np.linspace(-3.9, -3.9, 21)
 plot_review.stokeslet(r0, f)
-plot_review.streamlines(xstart, ystart, mesh=True)
+plot_review.streamlines(xstart, ystart, mesh=True, arrows=True)
+
 plot_review.__show__() 
