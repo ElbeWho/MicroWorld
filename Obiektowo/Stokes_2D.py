@@ -48,9 +48,6 @@ class Equations2D:
         if self.flag == 'wall':
             self.a = a - 0.4
             self.mX, self.mY = np.mgrid[self.a:b:steps, -0.2:b:0.005]
-            print("mx: ", self.mX.shape)
-            print("my: ", self.mY.shape)
-            print("a: ", self.a)
             self.steps = self.mX.shape[0]
             self.u = 0.*self.mX
             self.v = 0.*self.mY 
@@ -234,7 +231,7 @@ class Equations2D:
 
         ##--------------- tutaj będzie ścianka --------
 
-    def free_suf_par(self, r0, Fpar, coef = 1):
+    def free_surf_par(self, r0, Fpar, coef = 1):
         #to jest git
         Frel = np.array([Fpar[0], 0])
         erel = Frel/(Frel[0]**2+Frel[1]**2)*.5
@@ -242,7 +239,7 @@ class Equations2D:
         eim = erel
         self.stokeslet(-r0, eim, coef)
 
-    def free_suf_per(self, r0, Fper, coef=1):
+    def free_sufr_per(self, r0, Fper, coef=1):
         #to jest git tez
         Frel = np.array([0, Fper[0]])
         erel = Frel/(Frel[0]**2+Frel[1]**2)*.5
@@ -250,19 +247,15 @@ class Equations2D:
         self.stokeslet(-r0, -erel, coef)
 
     def hard_wall_par(self, r0, Fpar ):
-
-        ex = np.array([1, 0])
-        ey = np.array([0, 1])
-
+        """Problem tu jest ogólnie z siłą Fadd (choć to chyba mniej) oraz ze znakiem -Frel"""
+        #działa git jest
         h = r0[1]
         rim =np.array([r0[0], -r0[1]])
         coef1 = 2*h
         coef2 = -2*h**2
         d = np.array([1,0])
-        radd = np.array([-r0[1], r0[0]])
         Frel = np.array([1, 0])
         Fadd = np.array([0, 1])
-        
         #--real
         self.stokeslet(r0, Frel) 
         #--image
@@ -270,47 +263,83 @@ class Equations2D:
         self.dipole(rim, Fadd, d, coef=coef1)
         self.source_dipole(rim, -Frel, coef=coef2)
 
-    def hard_wall_per(self, r0, Fper, ratio):
-        versors = r0/(r0[0]**2+r0[1]**2)*.5
-        ex = np.array([versors[0], 0])
-        ey = np.array([0, versors[1]])
-        h = r0[1] #as a scalar
+    def hard_wall_per(self, r0, Fper):
 
-        Frel = np.array([Fper[0], 0])
-        #--real
-        self.stokeslet(r0, Frel)
-        #--image
-        self.stokeslet(-r0, -Frel, coef=coef1)
-        self.stokes_dipole(-r0, -Frel, coef=coef2)
-        self.source_dipole(-r0, -Frel, coef=coef3)
-    
-    def totality(self, r0, Fper, ratio):
-
-        ex = np.array([1, 0])
-        ey = np.array([0, 1])
         h = r0[1]
-        coef1 = (1-ratio)/(1+ratio)
-        coef2 = (2*ratio*h)/(ratio+1)
-        coef3 = -1*(2*ratio*h**2)/(ratio + 1)
-        Frel = np.array([Fpar[0], 0])
-        
+        rim =np.array([r0[0], -r0[1]])
+        coef0 = -1
+        coef1 = -2*h
+        coef2 = 2*h**2
+        d = np.array([0, 1])
+        Frel = np.array([0, 1])
+        Fadd = np.array([1, 0])
         #--real
-        self.stokeslet(ex, Frel)
+        self.stokeslet(r0, Frel) 
         #--image
-        self.stokeslet(-ex, -Frel, coef=coef1 )
-        self.dipole(-ex, -Frel, -ey, coef=coef2)
-
-        
+        self.stokeslet(rim, Frel, coef=coef0 ) 
+        self.dipole(rim, Frel, d, coef=coef1)
+        self.source_dipole(rim, -Frel, coef=coef2)
     
-    def streamlines(self):
+    def totality_par(self, r0, Fpar, ratio):
 
+        h = r0[1]
+        rim =np.array([r0[0], -r0[1]])
+        coef0 = (1-ratio)/(1+ratio)
+        coef1 = (2*ratio*h)/(ratio+1)
+        coef2 = -1*(2*ratio*h**2)/(ratio + 1)
+        d = np.array([1,0])
+        Frel = np.array([1, 0])
+        Fadd = np.array([0, 1])
+        #--real
+        self.stokeslet(r0, Frel) 
+        #--image
+        self.stokeslet(rim, Frel, coef=coef0 ) 
+        self.dipole(rim, Frel, d, coef=coef1)
+        self.source_dipole(rim, -Frel, coef=coef2)
+    
+    def totality_per(self, r0, Fpar, ratio):
+
+        h = r0[1]
+        rim =np.array([r0[0], -r0[1]])
+        coef0 = -1
+        coef1 = -2*h
+        coef2 = 2*h**2
+        d = np.array([0, 1])
+        Frel = np.array([0, 1])
+        Fadd = np.array([1, 0])
+        #--real
+        self.stokeslet(r0, Frel) 
+        #--image
+        self.stokeslet(rim, Frel, coef=coef0 ) 
+        self.dipole(rim, Frel, d, coef=coef1)
+        self.source_dipole(rim, -Frel, coef=coef2)
+    
+    def streamlines(self, xstart, ystart, mesh = False):
+
+        if mesh == True:
+            ax = plt.axes()
+            Z = np.sqrt(self.v**2+self.u**2)
+        
+        
+            self.image = ax.pcolormesh(self.mX.T, self.mY.T, Z.T,
+                norm=colors.LogNorm(vmin= 10**(-1), vmax=10**1),
+                #norm=colors.LogNorm(vmin=Z.min(), vmax=Z.max()),
+                snap=True,
+                cmap=plt.cm.inferno, rasterized=True, 
+                shading='gouraud', zorder=0)
+            
+            self.add_colorbar(self.image)
+        
+        else:
+            fig, ax = plt.subplots()
+
+        places=np.vstack([xstart,ystart]).T
         ui = RGI((self.mX[:, 0],self.mY[0, :]), self.u, method='linear')
         vi = RGI((self.mX[:, 0], self.mY[0, :]), self.v, method='linear')
 
         integrmodel = 'vode' # 'lsoda', 'dopri5', 'dop853'
         max_step = 2000
         step_size = 0.01
-        fig, ax = plt.subplots()
         dt = step_size
 
         def Intergrate_Line(t, coord):
@@ -321,47 +350,40 @@ class Equations2D:
             try:
                 ex = ui([xi, yi])[0]
                 ey = vi([xi, yi])[0]
-                print(ui([xi, yi])[0])
             except:
                 abort = True
                 return [False, False]
             n = (ex**2+ey**2)**0.5
             return [ex/n, ey/n]
 
-        xstart = np.linspace(-3.9, 3.9, 21)
-
-        ystart = np.linspace(-3.9, -3.9, 21)
-        places=np.vstack([xstart,ystart]).T
-
         for p in places:
-            print("here")
+
             r = ode(Intergrate_Line)
-            print("hree2")
             r.set_integrator(integrmodel)
-            print("hree3")
             lx=[p[0]]
             ly=[p[1]]
-
             r.set_initial_value([lx[0], ly[0]], 0)
-
             step = 0
             while r.successful():
                 
                 step += 1
                 r.integrate(r.t+dt)
                 x, y = r.y[0], r.y[1]
-
                 lx.append(x)
                 ly.append(y)
                 
-                if self.a >= x or self.b <= x or self.a >= y or self.b <= y or \
+                if self.a-0.1 >= x or self.b-0.1 <= x or self.a-0.1 >= y or self.b-0.1 <= y or \
                     step >= max_step:
                     break
                 if step >= max_step:
                     
-                    plt.plot(lx, ly, 'r') 
+                    ax.plot(lx, ly, 'r') 
                 else:
-                    plt.plot(lx, ly, 'k')
+                    ax.plot(lx, ly, 'k')
+        
+        
+        plt.savefig('wallfromanotherplanet.png', dpi=200)
+
 
         print("end now")
         
@@ -385,7 +407,6 @@ class Equations2D:
                             })
         
         if self.flag == "free":
-
             fig = plt.figure(figsize=(6,6),facecolor="w")
         
         if self.flag == "wall":
