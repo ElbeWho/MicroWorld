@@ -1,20 +1,11 @@
 import numpy as np
-import Stokes_2D #importing software
-import Stokes_3D 
-#using class Stokes form MicroWorls
-r0 = np.array([0, 0.0001])
-r2 = np.array([-1, 0])
-f = np.array([0, 1])
-d = np.array([0, 0.5])
-R = np.array([0,0,1])
+import Stokes_2D 
 
+r = np.array([0, 0.0001]) #defining position of the force
+F = np.array([0, 1]) #defining force values
 
-plot_review = Stokes_2D.Equations2D(-4, 4, 0.01, "free")
+singularity1 = Stokes_2D.Equations2D(-4, 4, 0.01, "free") #creating an object
 
-
-xstart = np.linspace(-3.9, 3.9, 21)
-ystart = np.linspace(-3.9, -3.9, 21)
-plot_review.stokeslet(r0, f)
-plot_review.streamlines(xstart, ystart, mesh=True, arrows=True)
-
-plot_review.__show__() 
+singularity1.stokeslet(r, F) #calling stokeslet
+singularity1.plot(title="Stokeslet.png") #plotting and saving
+singularity1.show() #showing plot

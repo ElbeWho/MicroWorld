@@ -53,7 +53,6 @@ class Equations2D:
             self.u = 0.*self.mX
             self.v = 0.*self.mY 
             command = False
-            self.fig, self.ax = plt.subplots()
             
         if command == True:
             print("Possible boundary conditions are 'free' and 'wall'.")
@@ -95,6 +94,7 @@ class Equations2D:
         ud, vd = first_term  + second_term + third_term 
         self.u += ud*coef
         self.v += vd*coef
+        self.arrows.append([r0[0], r0[1], F[0], F[1]])
 
     def stokes_dipole(self, r0: np.ndarray, F: np.ndarray, coef = 1):
         """
@@ -111,18 +111,15 @@ class Equations2D:
         for i in range(0, second_size):
             Id[i,i]=1
 
-        
         r=np.array([self.mX-r0[0], self.mY-r0[1]]) 
 
-
-
-        #---the famous rest
         modr=(r[0]**2+r[1]**2)**.5
         Idr = np.dot(r, Id) 
         second_term = (3*(e[0]*r[0]+e[1]*r[1])**2)*r/modr**5
         udip, vdip =    (-1)*Idr/modr**3  + second_term
         self.u += udip*coef
         self.v += vdip*coef
+        self.arrows.append([r0[0], r0[1], F[0], F[1]])
 
     def rotlet(self, r0: np.ndarray, F: np.ndarray, d: np.ndarray, coef = 1):
         """
@@ -138,6 +135,7 @@ class Equations2D:
         ua, va = ((d[0]*r[0]+ d[1]*r[1])*e[:, np.newaxis, np.newaxis] - (e[0]*r[0]+e[1]*r[1])*d[:, np.newaxis, np.newaxis] )/modr**3
         self.u += ua*coef
         self.v += va*coef
+        self.arrows.append([r0[0], r0[1], F[0], F[1]])
         
     def rotlet_R(self, r0: np.ndarray, R: np.ndarray, coef = 1):
         """
@@ -167,6 +165,7 @@ class Equations2D:
         us, vs = dwa+trzy
         self.u += us*coef
         self.v += vs*coef
+        self.arrows.append([r0[0], r0[1], F[0], F[1]])
 
     def source(self, r0: np.ndarray, M: float, coef=1):
         """
@@ -179,6 +178,7 @@ class Equations2D:
         ur, vr  = M*r/modr**3
         self.u += ur*coef
         self.v += vr*coef
+
 
     def source_dipole(self, r0: np.ndarray, M: np.ndarray, coef = 1):
         """
@@ -282,26 +282,26 @@ class Equations2D:
         self.dipole(rim, Frel, d, coef=coef1)
         self.source_dipole(rim, -Frel, coef=coef2)
     
-    def streamlines(self, xstart, ystart, mesh = False, arrows=False):
+    def streamlines(self, xstart, ystart, mesh = False, arrows=False, title = 'pass'):
 
         plt.rcParams['text.usetex'] = True
         plt.rcParams.update({
-                            'font.size': 18,
+                            'font.size': 20,
                             'text.usetex': True,
                             'text.latex.preamble': r'\usepackage{dsfont}'
                             })
 
         if self.flag == "free":
-            fig = plt.figure(figsize=(6,6),facecolor="w")
+            fig = plt.figure(figsize=(8,8),facecolor="w")
         
         elif self.flag == "wall":
             fig = plt.figure(figsize=(8,4),facecolor="w")
 
         if mesh == True:
             ax = plt.axes()
+            
             Z = np.sqrt(self.v**2+self.u**2)
-        
-        
+            
             self.image = ax.pcolormesh(self.mX.T, self.mY.T, Z.T,
                 norm=colors.LogNorm(vmin= 10**(-1), vmax=10**1),
                 #norm=colors.LogNorm(vmin=Z.min(), vmax=Z.max()),
@@ -310,6 +310,8 @@ class Equations2D:
                 shading='gouraud', zorder=0)
             
             self.add_colorbar(self.image)
+            ax.set_xticks(np.arange(-3, 5, 1))
+            ax.set_yticks(np.arange(-3, 5, 1))
         
         else:
             fig, ax = plt.subplots()
@@ -360,6 +362,8 @@ class Equations2D:
                     ax.plot(lx, ly, 'r') 
                 else:
                     ax.plot(lx, ly, 'k')
+        
+
 
         if arrows == True:
 
@@ -368,8 +372,12 @@ class Equations2D:
                       head_width=.15, color="y", zorder=5)
         else:
             pass
-        
-        plt.savefig('wallfromanotherplanet.png', dpi=200)
+
+        if title != 'pass':
+            plt.savefig(title, dpi=200)
+        else:
+            pass
+
         print("end now")
         
 
@@ -382,17 +390,17 @@ class Equations2D:
         cax = divider.append_axes("right", size=width, pad=pad)
         return im.axes.figure.colorbar(im, cax=cax, **kwargs)
 
-    def __plot__(self, arrows = False, title = 'pass'):
+    def plot(self, arrows = False, title = 'pass'):
         
         plt.rcParams['text.usetex'] = True
         plt.rcParams.update({
-                            'font.size': 28,
+                            'font.size': 20,
                             'text.usetex': True,
                             'text.latex.preamble': r'\usepackage{dsfont}'
                             })
         
         if self.flag == "free":
-            fig = plt.figure(figsize=(6,6),facecolor="w")
+            fig = plt.figure(figsize=(8,8),facecolor="w")
         
         elif self.flag == "wall":
             fig = plt.figure(figsize=(8,4),facecolor="w")
@@ -404,7 +412,7 @@ class Equations2D:
         
         
         self.image = ax.pcolormesh(self.mX.T, self.mY.T, Z.T,
-                norm=colors.LogNorm(vmin= 10**(-3), vmax=10**1),
+                norm=colors.LogNorm(vmin= 10**(-1), vmax=10**1),
                 #norm=colors.LogNorm(vmin=Z.min(), vmax=Z.max()),
                 snap=True,
                 cmap=plt.cm.inferno, rasterized=True, 
@@ -416,7 +424,10 @@ class Equations2D:
                density=0.38, 
                #z jakiegoś powodu nie działa dla rotlet 0.3
                color='k')
-        
+
+        ax.set_xticks(np.arange(-3, 4, 1))
+        ax.set_yticks(np.arange(-3, 4, 1))
+
         if self.flag == "wall":
             plt.axhline(linewidth=8, y = -0.1, color=(0.5, 0.5, 0.5), linestyle = '-')
         else:
@@ -424,22 +435,29 @@ class Equations2D:
         
         self.add_colorbar(self.image)
 
+        
+        
+
+    
+        if arrows == True:
+
+            if len(self.arrows) == 0:
+                print("For given singularity sollutions it is not possible to plot an arrow.")
+            else:
+                for i in range(0, len(self.arrows)):
+                    ax.arrow( self.arrows[i][0], self.arrows[i][1], self.arrows[i][2], self.arrows[i][3], length_includes_head=True,
+                        head_width=.15, color="y", zorder=5)
+                
+        else:
+            pass
+
         if title != 'pass':
             plt.savefig(title, dpi=200)
         else:
             pass
 
     
-        if arrows == True:
-
-            for i in range(0, len(self.arrows)):
-                ax.arrow( self.arrows[i][0], self.arrows[i][1], self.arrows[i][2], self.arrows[i][3], length_includes_head=True,
-                      head_width=.15, color="y", zorder=5)
-        else:
-            pass
-
-    
-    def __show__(self):
+    def show(self):
         plt.show()
         
 

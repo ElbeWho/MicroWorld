@@ -96,3 +96,8 @@ plt.show()
             self.mX, self.mY = np.meshgrid(xx,yy)
             self.u = np.zeros(self.mX.shape)
             self.v = np.zeros(self.mY.shape)"""
+
+xstart = np.linspace(-3.9, 3.9, 21)
+ystart = np.linspace(-3.9, -3.9, 21)
+r2 = np.array([2.0001, 2.0001])
+f2 = np.array([0, -1])
