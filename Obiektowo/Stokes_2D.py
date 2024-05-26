@@ -75,8 +75,6 @@ class Equations2D:
         self.v += v0*coef
         self.arrows.append([r0[0], r0[1], F[0], F[1]])
 
-        #teraz to trzeba tak przerobic zeby stokeslet nie byl voidem
-
 
     def dipole(self, r0: np.ndarray, F: np.ndarray, d: np.ndarray, coef = 1):
         """
@@ -281,105 +279,88 @@ class Equations2D:
         self.stokeslet(rim, Frel, coef=coef0 ) 
         self.dipole(rim, Frel, d, coef=coef1)
         self.source_dipole(rim, -Frel, coef=coef2)
-    
-    def streamlines(self, xstart, ystart, mesh = False, arrows=False, title = 'pass'):
 
+    def streamlines(self, xstart, ystart, mesh=False, arrows=False, title='pass'):
         plt.rcParams['text.usetex'] = True
         plt.rcParams.update({
-                            'font.size': 20,
-                            'text.usetex': True,
-                            'text.latex.preamble': r'\usepackage{dsfont}'
-                            })
+            'font.size': 20,
+            'text.usetex': True,
+            'text.latex.preamble': r'\usepackage{dsfont}'
+        })
 
         if self.flag == "free":
-            fig = plt.figure(figsize=(8,8),facecolor="w")
-        
+            fig = plt.figure(figsize=(8, 8), facecolor="w")
+            
         elif self.flag == "wall":
-            fig = plt.figure(figsize=(8,4),facecolor="w")
-
-        if mesh == True:
+            fig = plt.figure(figsize=(8, 4), facecolor="w")
+        if mesh:
             ax = plt.axes()
-            
-            Z = np.sqrt(self.v**2+self.u**2)
-            
+            Z = np.sqrt(self.v**2 + self.u**2)
             self.image = ax.pcolormesh(self.mX.T, self.mY.T, Z.T,
-                norm=colors.LogNorm(vmin= 10**(-1), vmax=10**1),
-                #norm=colors.LogNorm(vmin=Z.min(), vmax=Z.max()),
-                snap=True,
-                cmap=plt.cm.inferno, rasterized=True, 
-                shading='gouraud', zorder=0)
-            
+                                        norm=colors.LogNorm(vmin=10**(-1), vmax=10**1),
+                                        snap=True,
+                                        cmap=plt.cm.inferno, rasterized=True,
+                                        shading='gouraud', zorder=0)
             self.add_colorbar(self.image)
-            ax.set_xticks(np.arange(-3, 5, 1))
-            ax.set_yticks(np.arange(-3, 5, 1))
-        
         else:
-            fig, ax = plt.subplots()
+            fig, ax = plt.subplots(figsize=(8, 8))
 
-        places=np.vstack([xstart,ystart]).T
-        ui = RGI((self.mX[:, 0],self.mY[0, :]), self.u, method='linear')
+        places = np.vstack([xstart, ystart]).T
+        ui = RGI((self.mX[:, 0], self.mY[0, :]), self.u, method='linear')
         vi = RGI((self.mX[:, 0], self.mY[0, :]), self.v, method='linear')
 
-        integrmodel = 'vode' # 'lsoda', 'dopri5', 'dop853'
+        integrmodel = 'vode'
         max_step = 2000
         step_size = 0.01
         dt = step_size
 
-        def Intergrate_Line(t, coord):
-            # Function calculating Efield in every point for integrator
-            global abort
-            xi = coord[0]
-            yi = coord[1]
+        def Integrate_Line(t, coord):
+            xi, yi = coord
             try:
                 ex = ui([xi, yi])[0]
                 ey = vi([xi, yi])[0]
             except:
-                abort = True
                 return [False, False]
-            n = (ex**2+ey**2)**0.5
-            return [ex/n, ey/n]
+            n = np.sqrt(ex**2 + ey**2)
+            return [ex / n, ey / n]
 
         for p in places:
-
-            r = ode(Intergrate_Line)
+            r = ode(Integrate_Line)
             r.set_integrator(integrmodel)
-            lx=[p[0]]
-            ly=[p[1]]
+            lx, ly = [p[0]], [p[1]]
             r.set_initial_value([lx[0], ly[0]], 0)
             step = 0
             while r.successful():
-                
                 step += 1
-                r.integrate(r.t+dt)
+                r.integrate(r.t + dt)
                 x, y = r.y[0], r.y[1]
                 lx.append(x)
                 ly.append(y)
-                
-                if self.a-0.1 >= x or self.b-0.1 <= x or self.a-0.1 >= y or self.b-0.1 <= y or \
-                    step >= max_step:
+                if (x < self.a - 0.1 or x > self.b - 0.1 or y < self.a - 0.1 or y > self.b - 0.1 or
+                    step >= max_step):
                     break
-                if step >= max_step:
-                    ax.plot(lx, ly, 'r') 
-                else:
-                    ax.plot(lx, ly, 'k')
+            ax.plot(lx, ly, 'r' if step >= max_step else 'k')
+            ax.set_aspect('equal')
+
+        if arrows:
+            for arrow in self.arrows:
+                ax.arrow(arrow[0], arrow[1], arrow[2], arrow[3], length_includes_head=True,
+                        head_width=.15, color="y", zorder=5)
         
-
-
-        if arrows == True:
-
-            for i in range(0, len(self.arrows)):
-                ax.arrow( self.arrows[i][0], self.arrows[i][1], self.arrows[i][2], self.arrows[i][3], length_includes_head=True,
-                      head_width=.15, color="y", zorder=5)
-        else:
-            pass
+        ax.set_xlim(self.a, self.b)
+        ax.set_ylim(self.a, self.b)
+        ax.set_aspect('equal')
+        ax.set_xticks(np.arange(self.a, self.b + 1, 1))
+        ax.set_yticks(np.arange(self.a, self.b + 1, 1))
 
         if title != 'pass':
             plt.savefig(title, dpi=200)
         else:
-            pass
+           
+            plt.show()
 
         print("end now")
-        
+
 
     def add_colorbar(self, im, aspect=20, pad_fraction=0.5, **kwargs):
         """Add a vertical color bar to an image plot."""
@@ -388,6 +369,7 @@ class Equations2D:
         width = axes_grid1.axes_size.AxesY(current_ax, aspect=1. / aspect)
         pad = axes_grid1.axes_size.Fraction(pad_fraction, width)
         cax = divider.append_axes("right", size=width, pad=pad)
+        
         return im.axes.figure.colorbar(im, cax=cax, **kwargs)
 
     def plot(self, arrows = False, title = 'pass'):
@@ -425,8 +407,6 @@ class Equations2D:
                #z jakiegoś powodu nie działa dla rotlet 0.3
                color='k')
 
-        ax.set_xticks(np.arange(-3, 4, 1))
-        ax.set_yticks(np.arange(-3, 4, 1))
 
         if self.flag == "wall":
             plt.axhline(linewidth=8, y = -0.1, color=(0.5, 0.5, 0.5), linestyle = '-')
@@ -435,10 +415,6 @@ class Equations2D:
         
         self.add_colorbar(self.image)
 
-        
-        
-
-    
         if arrows == True:
 
             if len(self.arrows) == 0:
@@ -451,6 +427,12 @@ class Equations2D:
         else:
             pass
 
+        ax.set_xlim(self.a, self.b)
+        ax.set_ylim(self.a, self.b)
+        ax.set_aspect('equal')
+        ax.set_xticks(np.arange(self.a, self.b + 1, 1))
+        ax.set_yticks(np.arange(self.a, self.b + 1, 1))
+
         if title != 'pass':
             plt.savefig(title, dpi=200)
         else:
@@ -460,5 +442,3 @@ class Equations2D:
     def show(self):
         plt.show()
         
-
-
