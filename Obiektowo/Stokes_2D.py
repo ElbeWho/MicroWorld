@@ -86,13 +86,18 @@ class Equations2D:
         e = F/(F[0]**2+F[1]**2)**.5
         r=np.array([self.mX-r0[0], self.mY-r0[1]])
         modr=(r[0]**2+r[1]**2)**.5
-        first_term = ((d[0]*r[0]+ d[1]*r[1])*F[:, np.newaxis, np.newaxis] - (e[0]*r[0]+e[1]*r[1])*d[:, np.newaxis, np.newaxis] )/modr**3    
+        first_term = ((d[0]*r[0]+ d[1]*r[1])*e[:, np.newaxis, np.newaxis] - (e[0]*r[0]+e[1]*r[1])*d[:, np.newaxis, np.newaxis] )/modr**3    
         second_term =  -((d[0]*e[0]+d[1]*e[1])*r)/modr**3
         third_term = 3*((e[0]*r[0]+e[1]*r[1])*(d[0]*r[0]+ d[1]*r[1])*r)/modr**5 
         ud, vd = first_term  + second_term + third_term 
         self.u += ud*coef
         self.v += vd*coef
-        self.arrows.append([r0[0], r0[1], F[0], F[1]])
+        if F[0]>=0 and F[1]>=0:
+            self.arrows.append([r0[0], r0[1], F[0], F[1]])
+            self.arrows.append([r0[0], r0[1], -F[0], -F[1]])
+        else:
+            self.arrows.append([-F[0], -F[1], F[0], F[1]])
+            self.arrows.append([F[0], F[1], -F[0], -F[1]])
 
     def stokes_dipole(self, r0: np.ndarray, F: np.ndarray, coef = 1):
         """
@@ -163,7 +168,6 @@ class Equations2D:
         us, vs = dwa+trzy
         self.u += us*coef
         self.v += vs*coef
-        self.arrows.append([r0[0], r0[1], F[0], F[1]])
 
     def source(self, r0: np.ndarray, M: float, coef=1):
         """
@@ -280,7 +284,7 @@ class Equations2D:
         self.dipole(rim, Frel, d, coef=coef1)
         self.source_dipole(rim, -Frel, coef=coef2)
 
-    def streamlines(self, xstart, ystart, mesh=False, arrows=False, title='pass'):
+    def streamlines(self, xstart, ystart, mesh=False, direction=False, title='pass'):
         plt.rcParams['text.usetex'] = True
         plt.rcParams.update({
             'font.size': 20,
@@ -323,7 +327,8 @@ class Equations2D:
                 return [False, False]
             n = np.sqrt(ex**2 + ey**2)
             return [ex / n, ey / n]
-
+        
+    
         for p in places:
             r = ode(Integrate_Line)
             r.set_integrator(integrmodel)
@@ -342,10 +347,19 @@ class Equations2D:
             ax.plot(lx, ly, 'r' if step >= max_step else 'k')
             ax.set_aspect('equal')
 
-        if arrows:
-            for arrow in self.arrows:
-                ax.arrow(arrow[0], arrow[1], arrow[2], arrow[3], length_includes_head=True,
-                        head_width=.15, color="y", zorder=5)
+        if direction:
+            if len(self.arrows) == 0:
+                print("For given singularity sollutions it is not possible to plot an arrow.")
+            else:
+                for i in range(0, len(self.arrows)):
+                    origin = np.array([[self.arrows[i][0], self.arrows[i][1]]])
+                    vector = np.array([[self.arrows[i][2], self.arrows[i][3]]])
+                    print(self.arrows)
+                    ax.quiver( origin[:, 0], origin[:, 1], vector[:, 0], vector[:, 1], scale=1,
+                                angles='xy', scale_units='xy', color='b', zorder=5)
+                
+        else:
+            pass
         
         ax.set_xlim(self.a, self.b)
         ax.set_ylim(self.a, self.b)
@@ -372,7 +386,7 @@ class Equations2D:
         
         return im.axes.figure.colorbar(im, cax=cax, **kwargs)
 
-    def plot(self, arrows = False, title = 'pass'):
+    def plot(self, direction = False, title = 'pass'):
         
         plt.rcParams['text.usetex'] = True
         plt.rcParams.update({
@@ -394,7 +408,7 @@ class Equations2D:
         
         
         self.image = ax.pcolormesh(self.mX.T, self.mY.T, Z.T,
-                norm=colors.LogNorm(vmin= 10**(-1), vmax=10**1),
+                norm=colors.LogNorm(vmin= 10**(-3), vmax=10**1),
                 #norm=colors.LogNorm(vmin=Z.min(), vmax=Z.max()),
                 snap=True,
                 cmap=plt.cm.inferno, rasterized=True, 
@@ -403,7 +417,7 @@ class Equations2D:
 
         plt.streamplot(self.mX.T, self.mY.T, self.u.T, self.v.T, 
                broken_streamlines=False, 
-               density=0.38, 
+               density=0.3, 
                #z jakiegoś powodu nie działa dla rotlet 0.3
                color='k')
 
@@ -415,14 +429,16 @@ class Equations2D:
         
         self.add_colorbar(self.image)
 
-        if arrows == True:
-
+        if direction:
             if len(self.arrows) == 0:
                 print("For given singularity sollutions it is not possible to plot an arrow.")
             else:
                 for i in range(0, len(self.arrows)):
-                    ax.arrow( self.arrows[i][0], self.arrows[i][1], self.arrows[i][2], self.arrows[i][3], length_includes_head=True,
-                        head_width=.15, color="y", zorder=5)
+                    origin = np.array([[self.arrows[i][0], self.arrows[i][1]]])
+                    vector = np.array([[self.arrows[i][2], self.arrows[i][3]]])
+                    print(self.arrows)
+                    ax.quiver( origin[:, 0], origin[:, 1], vector[:, 0], vector[:, 1], scale=1,
+                                angles='xy', scale_units='xy', color='b', zorder=5)
                 
         else:
             pass
