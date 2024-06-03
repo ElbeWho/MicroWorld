@@ -48,6 +48,7 @@ class Equations2D:
         
         if self.flag == 'wall':
             self.a = a - 0.4
+            self.b = b
             self.mX, self.mY = np.mgrid[self.a:b:steps, -0.2:b:0.005]
             self.steps = self.mX.shape[0]
             self.u = 0.*self.mX
@@ -132,13 +133,14 @@ class Equations2D:
             d: distance between forces 
 
         """
-        e = F/(F[0]**2+F[1]**2)**.5
+        e = F
         r = np.array([self.mX-r0[0], self.mY-r0[1]])
         modr = (r[0]**2+r[1]**2)**.5 
         ua, va = ((d[0]*r[0]+ d[1]*r[1])*e[:, np.newaxis, np.newaxis] - (e[0]*r[0]+e[1]*r[1])*d[:, np.newaxis, np.newaxis] )/modr**3
         self.u += ua*coef
         self.v += va*coef
-        self.arrows.append([r0[0], r0[1], F[0], F[1]])
+        print(ua)
+
         
     def rotlet_R(self, r0: np.ndarray, R: np.ndarray, coef = 1):
         """
@@ -160,16 +162,16 @@ class Equations2D:
             F: direction and magnitude of the force
             d: distance between forces
         """
-        e = F/(F[0]**2+F[1]**2)**.5
+        e=F
         r=np.array([self.mX-r0[0], self.mY-r0[1]])
         modr=(r[0]**2+r[1]**2)**.5 
         dwa =  -((d[0]*e[0]+d[1]*e[1])*r)/modr**3
-        trzy = 3*((e[0]*r[0]+e[1]*r[1])*(d[0]*r[0]+ d[1]*r[1])*r)/modr**5 
+        trzy = 3*((e[0]*r[0]+e[1]*r[1])*(d[0]*r[0]+ d[1]*r[1])*r)/modr**5
         us, vs = dwa+trzy
         self.u += us*coef
         self.v += vs*coef
 
-    def source(self, r0: np.ndarray, M: float, coef=1):
+    def source(self, r0: np.ndarray, P: float, coef=1):
         """
         Arguments:
             r0: position of the force
@@ -195,7 +197,7 @@ class Equations2D:
         rrM=(r*rM[np.newaxis,])
         modr=(r[0]**2+r[1]**2)**.5
         second = 3*rrM/modr**5
-        u0, v0 = IdM[:,np.newaxis,np.newaxis]/modr**3- second
+        u0, v0 = -IdM[:,np.newaxis,np.newaxis]/modr**3+ second
         self.u += u0*coef
         self.v += v0*coef
 
@@ -203,18 +205,15 @@ class Equations2D:
 
     def free_surf_par(self, r0, Fpar, coef = 1):
         #to jest git
-        Frel = np.array([Fpar[0], 0])
-        erel = Frel/(Frel[0]**2+Frel[1]**2)*.5
-        self.stokeslet(r0, erel, coef)
-        eim = erel
-        self.stokeslet(-r0, eim, coef)
+        Frel = np.array([1, 0])
+        self.stokeslet(r0, Frel, coef)
+        self.stokeslet(-r0, Frel, coef)
 
-    def free_sufr_per(self, r0, Fper, coef=1):
+    def free_surf_per(self, r0, Fper, coef=1):
         #to jest git tez
         Frel = np.array([0, Fper[0]])
-        erel = Frel/(Frel[0]**2+Frel[1]**2)*.5
-        self.stokeslet(r0, erel, coef)
-        self.stokeslet(-r0, -erel, coef)
+        self.stokeslet(r0, Frel, coef)
+        self.stokeslet(-r0, Frel, coef)
 
     def hard_wall_par(self, r0, Fpar ):
         """Problem tu jest ogólnie z siłą Fadd (choć to chyba mniej) oraz ze znakiem -Frel"""
@@ -231,7 +230,7 @@ class Equations2D:
         #--image
         self.stokeslet(rim, Frel, coef=-1 ) 
         self.dipole(rim, Fadd, d, coef=coef1)
-        self.source_dipole(rim, -Frel, coef=coef2)
+        self.source_dipole(rim, Frel, coef=coef2)
 
     def hard_wall_per(self, r0, Fper):
 
@@ -241,8 +240,8 @@ class Equations2D:
         coef1 = -2*h
         coef2 = 2*h**2
         d = np.array([0, 1])
-        Frel = np.array([0, 1])
-        Fadd = np.array([1, 0])
+        Frel = np.array([0, Fper[0]])
+        Fadd = np.array([Fper[0], 0])
         #--real
         self.stokeslet(r0, Frel) 
         #--image
@@ -264,27 +263,27 @@ class Equations2D:
         self.stokeslet(r0, Frel) 
         #--image
         self.stokeslet(rim, Frel, coef=coef0 ) 
-        self.dipole(rim, Frel, d, coef=coef1)
-        self.source_dipole(rim, -Frel, coef=coef2)
+        self.dipole(rim, Fadd, d, coef=coef1)
+        self.source_dipole(rim, Frel, coef=coef2)
     
-    def totality_per(self, r0, Fpar, ratio):
+    def totality_per(self, r0, Fper, ratio):
 
         h = r0[1]
         rim =np.array([r0[0], -r0[1]])
-        coef0 = -1
-        coef1 = -2*h
-        coef2 = 2*h**2
+        coef0 = (1-ratio)/(1+ratio)
+        coef1 = (2*ratio*h)/(ratio+1)
+        coef2 = -1*(2*ratio*h**2)/(ratio + 1)
         d = np.array([0, 1])
-        Frel = np.array([0, 1])
-        Fadd = np.array([1, 0])
+        Frel = np.array([0, Fper[0]])
+        Fadd = np.array([Fper[0], 0])
         #--real
         self.stokeslet(r0, Frel) 
         #--image
         self.stokeslet(rim, Frel, coef=coef0 ) 
         self.dipole(rim, Frel, d, coef=coef1)
-        self.source_dipole(rim, -Frel, coef=coef2)
+        self.source_dipole(rim, Frel, coef=coef2)
 
-    def streamlines(self, xstart, ystart, mesh=False, direction=False, title='pass'):
+    def streamlines(self, xstart, ystart, mesh=False, direction=False, export=False, title='pass'):
         plt.rcParams['text.usetex'] = True
         plt.rcParams.update({
             'font.size': 20,
@@ -292,12 +291,15 @@ class Equations2D:
             'text.latex.preamble': r'\usepackage{dsfont}'
         })
 
-        if self.flag == "free":
+        if self.flag == "free" and export==False:
             fig = plt.figure(figsize=(8, 8), facecolor="w")
             
-        elif self.flag == "wall":
+        elif self.flag == "wall" and export==False:
             fig = plt.figure(figsize=(8, 4), facecolor="w")
-        if mesh:
+        else:
+            pass
+
+        if mesh and export == False:
             ax = plt.axes()
             Z = np.sqrt(self.v**2 + self.u**2)
             self.image = ax.pcolormesh(self.mX.T, self.mY.T, Z.T,
@@ -306,8 +308,10 @@ class Equations2D:
                                         cmap=plt.cm.inferno, rasterized=True,
                                         shading='gouraud', zorder=0)
             self.add_colorbar(self.image)
+        elif mesh and export:
+            print('Error: export does not support plotting. Mesh is set as True.')
         else:
-            fig, ax = plt.subplots(figsize=(8, 8))
+            pass
 
         places = np.vstack([xstart, ystart]).T
         ui = RGI((self.mX[:, 0], self.mY[0, :]), self.u, method='linear')
@@ -328,26 +332,65 @@ class Equations2D:
             n = np.sqrt(ex**2 + ey**2)
             return [ex / n, ey / n]
         
-    
-        for p in places:
-            r = ode(Integrate_Line)
-            r.set_integrator(integrmodel)
-            lx, ly = [p[0]], [p[1]]
-            r.set_initial_value([lx[0], ly[0]], 0)
-            step = 0
-            while r.successful():
-                step += 1
-                r.integrate(r.t + dt)
-                x, y = r.y[0], r.y[1]
-                lx.append(x)
-                ly.append(y)
-                if (x < self.a - 0.1 or x > self.b - 0.1 or y < self.a - 0.1 or y > self.b - 0.1 or
+        if export:
+            xlist = []
+            ylist = []
+            zlist = []
+            for p in places:
+                r = ode(Integrate_Line)
+                r.set_integrator(integrmodel)
+                lx=[p[0]]
+                ly=[p[1]]
+                r.set_initial_value([lx[0], ly[0]], 0)
+                step = 0
+                while r.successful():
+                    step += 1
+                    r.integrate(r.t+dt)
+                    x, y= r.y[0], r.y[1]
+                    lx.append(x)
+                    ly.append(y)
+                    xlist.append(x)
+                    ylist.append(y)
+                    zlist.append(0)
+                    if (x < self.a - 0.1 or x > self.b - 0.1 or y < self.a - 0.1 or y > self.b - 0.1 or
                     step >= max_step):
-                    break
-            ax.plot(lx, ly, 'r' if step >= max_step else 'k')
-            ax.set_aspect('equal')
+                        xlist.append(None)
+                        ylist.append(None)
+                        zlist.append(None)
+                        break
+            triple_list = []
 
-        if direction:
+            for i in range(0, len(xlist)):
+                single_array = np.array([xlist[i], ylist[i], zlist[i]])
+                print(single_array)
+                triple_list.append(single_array)
+
+            triple_array = np.array(triple_list)
+            np.savez('output', triple_array)
+        else:
+            for p in places:
+                r = ode(Integrate_Line)
+                r.set_integrator(integrmodel)
+                lx, ly = [p[0]], [p[1]]
+                r.set_initial_value([lx[0], ly[0]], 0)
+                step = 0
+                while r.successful():
+                    step += 1
+                    r.integrate(r.t + dt)
+                    x, y = r.y[0], r.y[1]
+                    lx.append(x)
+                    ly.append(y)
+                    if (x < self.a - 0.1 or x > self.b - 0.1 or y < self.a - 0.1 or y > self.b - 0.1 or
+                        step >= max_step):
+                        break
+                ax.plot(lx, ly, 'r' if step >= max_step else 'k')
+                ax.set_xlim(self.a, self.b)
+                ax.set_ylim(self.a, self.b)
+                ax.set_aspect('equal')
+                ax.set_xticks(np.arange(self.a, self.b + 1, 1))
+                ax.set_yticks(np.arange(self.a, self.b + 1, 1))
+
+        if direction and export==False:
             if len(self.arrows) == 0:
                 print("For given singularity sollutions it is not possible to plot an arrow.")
             else:
@@ -355,26 +398,21 @@ class Equations2D:
                     origin = np.array([[self.arrows[i][0], self.arrows[i][1]]])
                     vector = np.array([[self.arrows[i][2], self.arrows[i][3]]])
                     print(self.arrows)
-                    ax.quiver( origin[:, 0], origin[:, 1], vector[:, 0], vector[:, 1], scale=1,
+                    ax.quiver(origin[:, 0], origin[:, 1], vector[:, 0], vector[:, 1], scale=1,
                                 angles='xy', scale_units='xy', color='b', zorder=5)
-                
+        elif direction and export:
+            print('Eror: export mode does not support plotting. Direction is set as True.')
         else:
             pass
-        
-        ax.set_xlim(self.a, self.b)
-        ax.set_ylim(self.a, self.b)
-        ax.set_aspect('equal')
-        ax.set_xticks(np.arange(self.a, self.b + 1, 1))
-        ax.set_yticks(np.arange(self.a, self.b + 1, 1))
 
-        if title != 'pass':
-            plt.savefig(title, dpi=200)
+        if title != 'pass' and export==False:
+            plt.savefig(title, bbox_inches='tight', pad_inches=0, dpi=200)
+        elif title != 'pass' and export:
+            print('Error: export does not support plotting. Title is given.')
         else:
-           
-            plt.show()
+            pass
 
         print("end now")
-
 
     def add_colorbar(self, im, aspect=20, pad_fraction=0.5, **kwargs):
         """Add a vertical color bar to an image plot."""
@@ -397,16 +435,24 @@ class Equations2D:
         
         if self.flag == "free":
             fig = plt.figure(figsize=(8,8),facecolor="w")
-        
+            ax = plt.axes()
+            ax.set_xlim(self.a, self.b)
+            ax.set_ylim(self.a, self.b)
+            ax.set_aspect('equal')
+            ax.set_xticks(np.arange(self.a, self.b + 1, 1))
+            ax.set_yticks(np.arange(self.a, self.b + 1, 1))
+
+            
         elif self.flag == "wall":
             fig = plt.figure(figsize=(8,4),facecolor="w")
+            ax = plt.axes()
         else:
             print("Error in boundary conditions.")
 
-        ax = plt.axes()
+        
         Z = np.sqrt(self.v**2+self.u**2)
         
-        
+
         self.image = ax.pcolormesh(self.mX.T, self.mY.T, Z.T,
                 norm=colors.LogNorm(vmin= 10**(-3), vmax=10**1),
                 #norm=colors.LogNorm(vmin=Z.min(), vmax=Z.max()),
@@ -417,19 +463,19 @@ class Equations2D:
 
         plt.streamplot(self.mX.T, self.mY.T, self.u.T, self.v.T, 
                broken_streamlines=False, 
-               density=0.3, 
+               density=0.4, 
                #z jakiegoś powodu nie działa dla rotlet 0.3
                color='k')
 
 
         if self.flag == "wall":
-            plt.axhline(linewidth=8, y = -0.1, color=(0.5, 0.5, 0.5), linestyle = '-')
+            plt.axhline(linewidth=10, y = -0.1, color=(0.5, 0.5, 0.5), linestyle = '-')
         else:
             pass
         
         self.add_colorbar(self.image)
 
-        if direction:
+        if direction== True:
             if len(self.arrows) == 0:
                 print("For given singularity sollutions it is not possible to plot an arrow.")
             else:
@@ -443,17 +489,12 @@ class Equations2D:
         else:
             pass
 
-        ax.set_xlim(self.a, self.b)
-        ax.set_ylim(self.a, self.b)
-        ax.set_aspect('equal')
-        ax.set_xticks(np.arange(self.a, self.b + 1, 1))
-        ax.set_yticks(np.arange(self.a, self.b + 1, 1))
+
 
         if title != 'pass':
-            plt.savefig(title, dpi=200)
+            plt.savefig(title, bbox_inches='tight', pad_inches=0, dpi=200)
         else:
             pass
-
     
     def show(self):
         plt.show()
