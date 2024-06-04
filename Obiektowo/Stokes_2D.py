@@ -179,7 +179,7 @@ class Equations2D:
         """
         r = np.array([self.mX-r0[0], self.mY-r0[1]])
         modr=(r[0]**2+r[1]**2)**.5 
-        ur, vr  = M*r/modr**3
+        ur, vr  = P*r/modr**3
         self.u += ur*coef
         self.v += vr*coef
 
@@ -213,7 +213,7 @@ class Equations2D:
         #to jest git tez
         Frel = np.array([0, Fper[0]])
         self.stokeslet(r0, Frel, coef)
-        self.stokeslet(-r0, Frel, coef)
+        self.stokeslet(-r0, -Frel, coef)
 
     def hard_wall_par(self, r0, Fpar ):
         """Problem tu jest ogólnie z siłą Fadd (choć to chyba mniej) oraz ze znakiem -Frel"""
@@ -241,13 +241,12 @@ class Equations2D:
         coef2 = 2*h**2
         d = np.array([0, 1])
         Frel = np.array([0, Fper[0]])
-        Fadd = np.array([Fper[0], 0])
         #--real
         self.stokeslet(r0, Frel) 
         #--image
         self.stokeslet(rim, Frel, coef=coef0 ) 
         self.dipole(rim, Frel, d, coef=coef1)
-        self.source_dipole(rim, -Frel, coef=coef2)
+        self.source_dipole(rim, Frel, coef=coef2)
     
     def totality_par(self, r0, Fpar, ratio):
 
