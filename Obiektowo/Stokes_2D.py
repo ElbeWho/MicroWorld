@@ -22,20 +22,19 @@ class Equations2D:
             a: lenght of the plot
             b: width of the plot
             steps: space between first and last point for both lenth and wisth
+            function: "free" or "wall"; optional argument informing how data wil be plotted,
+                        with or without obstacle.
 
         ---------
-            
+
         Velocity values prepared to be used at the end of the definition:
             u: values of velocity in the x direction
             v: values of velocity in the y direction
         """
-        
+
         self.flag = function 
         self.arrows = []
-        #słabe rozwiązanie z 'command' --> do przemyślenia
-
         command = True
-
         if self.flag == 'free':
             self.a = a
             self.b = b
@@ -45,7 +44,6 @@ class Equations2D:
             self.v = 0.*self.mY 
             print(self.steps)
             command = False
-        
         if self.flag == 'wall':
             self.a = a - 0.4
             self.b = b
@@ -54,7 +52,6 @@ class Equations2D:
             self.u = 0.*self.mX
             self.v = 0.*self.mY 
             command = False
-            
         if command == True:
             print("Possible boundary conditions are 'free' and 'wall'.")
         
@@ -64,6 +61,7 @@ class Equations2D:
         Arguments:
             r0: position of the force
             F: direction and magnitude of the force
+            coef: optional argument set to 1, can be used to multiply whole welocity field by choosen number
         """
         r=np.array([self.mX-r0[0], self.mY-r0[1]])
         Id=np.array([[1,0],[0,1]])
@@ -82,7 +80,8 @@ class Equations2D:
         Arguments:
             r0: position of the force
             F: direction and magnitude of the force
-            d: distance between forces 
+            d: distance between forces
+            coef: optional argument set to 1, can be used to multiply whole welocity field by choosen number
         """
         e = F/(F[0]**2+F[1]**2)**.5
         r=np.array([self.mX-r0[0], self.mY-r0[1]])
@@ -105,18 +104,16 @@ class Equations2D:
         Arguments:
             r0: position of force
             F: direction and magnitude of the force
+            coef: optional argument set to 1, can be used to multiply whole welocity field by choosen number
         """
         e = F/(F[0]**2+F[1]**2)**.5
         
         first_size = self.u.shape[0]
         second_size = self.u.shape[1]
-
         Id=np.zeros([second_size, first_size ])
         for i in range(0, second_size):
             Id[i,i]=1
-
         r=np.array([self.mX-r0[0], self.mY-r0[1]]) 
-
         modr=(r[0]**2+r[1]**2)**.5
         Idr = np.dot(r, Id) 
         second_term = (3*(e[0]*r[0]+e[1]*r[1])**2)*r/modr**5
@@ -130,8 +127,8 @@ class Equations2D:
         Arguments:
             r0: position of the force
             F: direction and magnitude of the force
-            d: distance between forces 
-
+            d: distance between forces
+            coef: optional argument set to 1, can be used to multiply whole welocity field by choosen number
         """
         e = F
         r = np.array([self.mX-r0[0], self.mY-r0[1]])
@@ -147,6 +144,7 @@ class Equations2D:
         Arguments:
             r0: position of the force
             R: torque acting at the origin
+            coef: optional argument set to 1, can be used to multiply whole welocity field by choosen number
         """
         r = np.array([self.mX-r0[0], self.mY-r0[1]])
         modr = (r[0]**2+r[1]**2)**.5
@@ -161,6 +159,7 @@ class Equations2D:
             r0: position of the force
             F: direction and magnitude of the force
             d: distance between forces
+            coef: optional argument set to 1, can be used to multiply whole welocity field by choosen number
         """
         e=F
         r=np.array([self.mX-r0[0], self.mY-r0[1]])
@@ -176,6 +175,7 @@ class Equations2D:
         Arguments:
             r0: position of the force
             M: magnitude of a source
+            coef: optional argument set to 1, can be used to multiply whole welocity field by choosen number
         """
         r = np.array([self.mX-r0[0], self.mY-r0[1]])
         modr=(r[0]**2+r[1]**2)**.5 
@@ -189,6 +189,7 @@ class Equations2D:
         Arguments:
             r0: position of the force
             M: strenght of the dipole
+            coef: optional argument set to 1, can be used to multiply whole welocity field by choosen number
         """
         r=np.array([self.mX-r0[0], self.mY-r0[1]])
         Id=np.array([[1,0],[0,1]])
@@ -200,20 +201,28 @@ class Equations2D:
         u0, v0 = -IdM[:,np.newaxis,np.newaxis]/modr**3+ second
         self.u += u0*coef
         self.v += v0*coef
+        
+    def free_surf_par(self, r0, Fpar):
+        """
+        Arguments:
+            r0: position of the force
+            Fpar: direction and magnitude of the force, 
+                    only parallel component will be considered
+        """
+        Frel = np.array([Fpar[1], 0])
+        self.stokeslet(r0, Frel)
+        self.stokeslet(-r0, Frel)
 
-        ##--------------- tutaj będzie ścianka --------
-
-    def free_surf_par(self, r0, Fpar, coef = 1):
-        #to jest git
-        Frel = np.array([1, 0])
-        self.stokeslet(r0, Frel, coef)
-        self.stokeslet(-r0, Frel, coef)
-
-    def free_surf_per(self, r0, Fper, coef=1):
-        #to jest git tez
+    def free_surf_per(self, r0, Fper):
+        """
+        Arguments:
+            r0: position of the force
+            Fpar: direction and magnitude of the force, 
+                    only perpendicular component will be considered
+        """
         Frel = np.array([0, Fper[0]])
-        self.stokeslet(r0, Frel, coef)
-        self.stokeslet(-r0, -Frel, coef)
+        self.stokeslet(r0, Frel)
+        self.stokeslet(-r0, -Frel)
 
     def hard_wall_par(self, r0, Fpar ):
         """Problem tu jest ogólnie z siłą Fadd (choć to chyba mniej) oraz ze znakiem -Frel"""
@@ -269,9 +278,9 @@ class Equations2D:
 
         h = r0[1]
         rim =np.array([r0[0], -r0[1]])
-        coef0 = (1-ratio)/(1+ratio)
-        coef1 = (2*ratio*h)/(ratio+1)
-        coef2 = -1*(2*ratio*h**2)/(ratio + 1)
+        coef0 = -1
+        coef1 = -(2*ratio*h)/(ratio+1)
+        coef2 = (2*ratio*h**2)/(ratio + 1)
         d = np.array([0, 1])
         Frel = np.array([0, Fper[0]])
         Fadd = np.array([Fper[0], 0])
@@ -453,7 +462,7 @@ class Equations2D:
         
 
         self.image = ax.pcolormesh(self.mX.T, self.mY.T, Z.T,
-                norm=colors.LogNorm(vmin= 10**(-3), vmax=10**1),
+                norm=colors.LogNorm(vmin= 10**(-2), vmax=10**1),
                 #norm=colors.LogNorm(vmin=Z.min(), vmax=Z.max()),
                 snap=True,
                 cmap=plt.cm.inferno, rasterized=True, 
