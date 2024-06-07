@@ -201,8 +201,8 @@ class Equations2D:
         u0, v0 = -IdM[:,np.newaxis,np.newaxis]/modr**3+ second
         self.u += u0*coef
         self.v += v0*coef
-        
-    def free_surf_par(self, r0, Fpar):
+
+    def free_surf_par(self, r0: np.ndarray, Fpar: np.ndarray):
         """
         Arguments:
             r0: position of the force
@@ -210,10 +210,12 @@ class Equations2D:
                     only parallel component will be considered
         """
         Frel = np.array([Fpar[1], 0])
+        #real system
         self.stokeslet(r0, Frel)
+        #image system
         self.stokeslet(-r0, Frel)
 
-    def free_surf_per(self, r0, Fper):
+    def free_surf_per(self, r0: np.ndarray, Fper: np.ndarray):
         """
         Arguments:
             r0: position of the force
@@ -221,18 +223,24 @@ class Equations2D:
                     only perpendicular component will be considered
         """
         Frel = np.array([0, Fper[0]])
+        #real system
         self.stokeslet(r0, Frel)
+        #image system
         self.stokeslet(-r0, -Frel)
 
-    def hard_wall_par(self, r0, Fpar ):
-        """Problem tu jest ogólnie z siłą Fadd (choć to chyba mniej) oraz ze znakiem -Frel"""
-        #działa git jest
+    def hard_wall_par(self, r0: np.ndarray, Fpar: np.ndarray):
+        """
+        Arguments:
+            r0: position of the force
+            Fpar: direction and magnitude of the force, 
+                    only perpendicular component will be considered
+        """
         h = r0[1]
         rim =np.array([r0[0], -r0[1]])
         coef1 = 2*h
         coef2 = -2*h**2
         d = np.array([1,0])
-        Frel = np.array([1, 0])
+        Frel = np.array([1, 0])*Fpar[0]
         Fadd = np.array([0, 1])
         #--real
         self.stokeslet(r0, Frel) 
@@ -241,8 +249,13 @@ class Equations2D:
         self.dipole(rim, Fadd, d, coef=coef1)
         self.source_dipole(rim, Frel, coef=coef2)
 
-    def hard_wall_per(self, r0, Fper):
-
+    def hard_wall_per(self, r0: np.ndarray, Fper: np.ndarray):
+        """
+        Arguments:
+            r0: position of the force
+            Fpar: direction and magnitude of the force, 
+                    only perpendicular component will be considered
+        """
         h = r0[1]
         rim =np.array([r0[0], -r0[1]])
         coef0 = -1
@@ -250,32 +263,44 @@ class Equations2D:
         coef2 = 2*h**2
         d = np.array([0, 1])
         Frel = np.array([0, Fper[0]])
-        #--real
+        #--real system
         self.stokeslet(r0, Frel) 
-        #--image
+        #--image system
         self.stokeslet(rim, Frel, coef=coef0 ) 
         self.dipole(rim, Frel, d, coef=coef1)
         self.source_dipole(rim, Frel, coef=coef2)
     
-    def totality_par(self, r0, Fpar, ratio):
-
+    def totality_par(self, r0, Fpar: np.ndarray, ratio: float):
+        """
+        Arguments:
+            r0: position of the force
+            Fpar: direction and magnitude of the force, 
+                    only perpendicular component will be considered
+            ratio: ratio of fluids' viscosities
+        """
         h = r0[1]
         rim =np.array([r0[0], -r0[1]])
         coef0 = (1-ratio)/(1+ratio)
         coef1 = (2*ratio*h)/(ratio+1)
         coef2 = -1*(2*ratio*h**2)/(ratio + 1)
         d = np.array([1,0])
-        Frel = np.array([1, 0])
+        Frel = np.array([1, 0])*Fpar[0]
         Fadd = np.array([0, 1])
-        #--real
+        #--real system
         self.stokeslet(r0, Frel) 
-        #--image
+        #--image system
         self.stokeslet(rim, Frel, coef=coef0 ) 
         self.dipole(rim, Fadd, d, coef=coef1)
         self.source_dipole(rim, Frel, coef=coef2)
     
     def totality_per(self, r0, Fper, ratio):
-
+        """
+        Arguments:
+            r0: position of the force
+            Fpar: direction and magnitude of the force, 
+                    only perpendicular component will be considered
+            ratio: ratio of fluids' viscosities
+        """
         h = r0[1]
         rim =np.array([r0[0], -r0[1]])
         coef0 = -1
@@ -283,10 +308,9 @@ class Equations2D:
         coef2 = (2*ratio*h**2)/(ratio + 1)
         d = np.array([0, 1])
         Frel = np.array([0, Fper[0]])
-        Fadd = np.array([Fper[0], 0])
-        #--real
+        #--real system
         self.stokeslet(r0, Frel) 
-        #--image
+        #--image system
         self.stokeslet(rim, Frel, coef=coef0 ) 
         self.dipole(rim, Frel, d, coef=coef1)
         self.source_dipole(rim, Frel, coef=coef2)
