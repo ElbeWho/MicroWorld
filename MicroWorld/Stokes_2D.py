@@ -136,9 +136,8 @@ class Equations2D:
         ua, va = ((d[0]*r[0]+ d[1]*r[1])*e[:, np.newaxis, np.newaxis] - (e[0]*r[0]+e[1]*r[1])*d[:, np.newaxis, np.newaxis] )/modr**3
         self.u += ua*coef
         self.v += va*coef
-        print(ua)
+        self.arrows.append([r0[0], r0[1], F[0], F[1]])
 
-        
     def rotlet_R(self, r0: np.ndarray, R: np.ndarray, coef = 1):
         """
         Arguments:
@@ -169,6 +168,7 @@ class Equations2D:
         us, vs = dwa+trzy
         self.u += us*coef
         self.v += vs*coef
+        self.arrows.append([r0[0], r0[1], F[0], F[1]])
 
     def source(self, r0: np.ndarray, P: float, coef=1):
         """
@@ -201,6 +201,7 @@ class Equations2D:
         u0, v0 = -IdM[:,np.newaxis,np.newaxis]/modr**3+ second
         self.u += u0*coef
         self.v += v0*coef
+        self.arrows.append([r0[0], r0[1], M[0], M[1]])
 
     def free_surf_par(self, r0: np.ndarray, Fpar: np.ndarray):
         """
@@ -214,6 +215,7 @@ class Equations2D:
         self.stokeslet(r0, Frel)
         #image system
         self.stokeslet(-r0, Frel)
+        self.arrows.append([r0[0], r0[1], Frel[0], Frel[1]])
 
     def free_surf_per(self, r0: np.ndarray, Fper: np.ndarray):
         """
@@ -227,6 +229,7 @@ class Equations2D:
         self.stokeslet(r0, Frel)
         #image system
         self.stokeslet(-r0, -Frel)
+        self.arrows.append([r0[0], r0[1], Frel[0], Frel[1]])
 
     def hard_wall_par(self, r0: np.ndarray, Fpar: np.ndarray):
         """
@@ -248,6 +251,7 @@ class Equations2D:
         self.stokeslet(rim, Frel, coef=-1 ) 
         self.dipole(rim, Fadd, d, coef=coef1)
         self.source_dipole(rim, Frel, coef=coef2)
+        self.arrows.append([r0[0], r0[1], Frel[0], Frel[1]])
 
     def hard_wall_per(self, r0: np.ndarray, Fper: np.ndarray):
         """
@@ -315,7 +319,20 @@ class Equations2D:
         self.dipole(rim, Frel, d, coef=coef1)
         self.source_dipole(rim, Frel, coef=coef2)
 
-    def streamlines(self, xstart, ystart, mesh=False, direction=False, export=False, title='pass'):
+    def streamlines(self, xstart: np.ndarray, ystart: np.ndarray, mesh=False, direction=False, export=False, title='pass'):
+        """
+        Arguments:
+            xstart: an array with starting points for x axis
+            ystart: an array with starting points for y axis
+        Optional:
+            mesh: bool value, originally set to False, if set to True plots colormap 
+            direction: bool value, originally set to False, if set to True shows directions 
+                        and magnitude of forces with arrows
+            export: bool value, originally set to False, if set to True function saves 
+                        interpolated data of stremlines as .npz file
+            title: sting value, originally set to "pass", if different string given plot 
+                        will be saved with extension given within a string
+        """
         plt.rcParams['text.usetex'] = True
         plt.rcParams.update({
             'font.size': 20,
@@ -436,7 +453,6 @@ class Equations2D:
             print('Eror: export mode does not support plotting. Direction is set as True.')
         else:
             pass
-
         if title != 'pass' and export==False:
             plt.savefig(title, bbox_inches='tight', pad_inches=0, dpi=200)
         elif title != 'pass' and export:
@@ -444,19 +460,23 @@ class Equations2D:
         else:
             pass
 
-        print("end now")
-
     def add_colorbar(self, im, aspect=20, pad_fraction=0.5, **kwargs):
-        """Add a vertical color bar to an image plot."""
+        """Adds a vertical color bar to an image plot."""
         current_ax = plt.gca()  # Get the current axes
         divider = axes_grid1.make_axes_locatable(current_ax)
         width = axes_grid1.axes_size.AxesY(current_ax, aspect=1. / aspect)
         pad = axes_grid1.axes_size.Fraction(pad_fraction, width)
         cax = divider.append_axes("right", size=width, pad=pad)
-        
         return im.axes.figure.colorbar(im, cax=cax, **kwargs)
 
     def plot(self, direction = False, title = 'pass'):
+        """
+        Optional:
+            direction: bool value, originally set to False, if set to True shows directions 
+                        and magnitude of forces with arrows
+            title: sting value, originally set to "pass", if different string given plot 
+                        will be saved with extension given within a string
+        """
         
         plt.rcParams['text.usetex'] = True
         plt.rcParams.update({
@@ -473,7 +493,6 @@ class Equations2D:
             ax.set_aspect('equal')
             ax.set_xticks(np.arange(self.a, self.b + 1, 1))
             ax.set_yticks(np.arange(self.a, self.b + 1, 1))
-
             
         elif self.flag == "wall":
             fig = plt.figure(figsize=(8,4),facecolor="w")
@@ -481,24 +500,20 @@ class Equations2D:
         else:
             print("Error in boundary conditions.")
 
-        
         Z = np.sqrt(self.v**2+self.u**2)
         
-
         self.image = ax.pcolormesh(self.mX.T, self.mY.T, Z.T,
-                norm=colors.LogNorm(vmin= 10**(-2), vmax=10**1),
+                norm=colors.LogNorm(vmin= 10**(-3), vmax=10**1),
                 #norm=colors.LogNorm(vmin=Z.min(), vmax=Z.max()),
                 snap=True,
                 cmap=plt.cm.inferno, rasterized=True, 
                 shading='gouraud', zorder=0)
-
-
+        
         plt.streamplot(self.mX.T, self.mY.T, self.u.T, self.v.T, 
                broken_streamlines=False, 
                density=0.4, 
                #z jakiegoś powodu nie działa dla rotlet 0.3
                color='k')
-
 
         if self.flag == "wall":
             plt.axhline(linewidth=10, y = -0.1, color=(0.5, 0.5, 0.5), linestyle = '-')
@@ -521,13 +536,12 @@ class Equations2D:
         else:
             pass
 
-
-
         if title != 'pass':
-            plt.savefig(title, bbox_inches='tight', pad_inches=0, dpi=200)
+            plt.savefig(title, bbox_inches='tight', dpi=200)
         else:
             pass
     
     def show(self):
+        """Shows image."""
         plt.show()
         
