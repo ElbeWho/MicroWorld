@@ -21,3 +21,5 @@ to write to the following e-mail address g.niechwiado@student.uw.edu.pl .
 
 As examples are shown singularities but also film of swimming algae.
 
+Work was created at University of Warsaw.
+
