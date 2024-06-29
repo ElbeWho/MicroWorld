@@ -15,7 +15,7 @@ and Matplotlib. In the program are two possible ways to plot vector field, the f
 is fully based on Matplotlib and function streamplot that creates streamlines automatically.
 The second one is using integration with SciPy to locally calculate streamlines positions. This
 data can be exported and type of its extension whas choosen with thought of future development.
-We started creating visualisation in 3D for Stokeslet with library k3d and using JuPyter Notebook.
+We started creating visualisation in 3D for Stokeslet with library k3d and using Jupyter Notebook.
 
 We highly encourage to write with any questions about the current version or future development to the following e-mail address g.niechwiado@student.uw.edu.pl .
 
