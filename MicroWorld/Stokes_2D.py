@@ -503,7 +503,7 @@ class Equations2D:
         Z = np.sqrt(self.v**2+self.u**2)
         
         self.image = ax.pcolormesh(self.mX.T, self.mY.T, Z.T,
-                norm=colors.LogNorm(vmin= 10**(-1), vmax=10**1),
+                norm=colors.LogNorm(vmin= 10**(-3), vmax=10**1),
                 #norm=colors.LogNorm(vmin=Z.min(), vmax=Z.max()),
                 snap=True,
                 cmap=plt.cm.inferno, rasterized=True, 
