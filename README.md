@@ -3,8 +3,8 @@ In this repository we brought together most popular singularity solutions of Sto
 equation and created a program that can plot those. 
 We presented the fundamental solution for free space and incompressible fluid, called Stokeslet, that is Green’s Function. 
 Later on we took a closer look at its derivatives, that also satisfies our differential equation. 
-Those derivatives ale called singularity solutions and in this work we focused at Dipole, Rotlet,
-Stresslet, Source and Sink. We also put in biological context to describe how bifalgellated
+Those derivatives ale called singularity solutions and in this work we focused at dipole, Rotlet,
+Stresslet, source, sink and source doublet (source dipole). We also put in biological context to describe how bifalgellated
 algae and a spermatozoon swims.
 We also described flow for a point force next to interface of two liquids. As we relay on the
 ratio of two fluids we can describe limiting cases as one of the fluids is acting as a free surface
