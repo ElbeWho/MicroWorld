@@ -72,7 +72,7 @@ class Equations2D:
         u0, v0 =Idf[:,np.newaxis,np.newaxis]/modr+rrTF/modr**3.
         self.u += u0*coef
         self.v += v0*coef
-        self.arrows.append([r0[0], r0[1], F[0], F[1]])
+
 
 
     def dipole(self, r0: np.ndarray, F: np.ndarray, d: np.ndarray, coef = 1):
@@ -215,7 +215,7 @@ class Equations2D:
         self.stokeslet(r0, Frel)
         #image system
         self.stokeslet(-r0, Frel)
-        self.arrows.append([r0[0], r0[1], Frel[0], Frel[1]])
+            
 
     def free_surf_per(self, r0: np.ndarray, Fper: np.ndarray):
         """
@@ -503,15 +503,15 @@ class Equations2D:
         Z = np.sqrt(self.v**2+self.u**2)
         
         self.image = ax.pcolormesh(self.mX.T, self.mY.T, Z.T,
-                norm=colors.LogNorm(vmin= 10**(-3), vmax=10**1),
+                norm=colors.LogNorm(vmin= 10**(-1), vmax=10**1),
                 #norm=colors.LogNorm(vmin=Z.min(), vmax=Z.max()),
                 snap=True,
                 cmap=plt.cm.inferno, rasterized=True, 
                 shading='gouraud', zorder=0)
         
-        plt.streamplot(self.mX.T, self.mY.T, self.u.T, self.v.T, 
+        plt.streamplot(self.mX.T, self.mY.T, self.u.T, self.v.T,
                broken_streamlines=False, 
-               density=0.3, 
+               density=0.4, 
                #z jakiegoś powodu nie działa dla rotlet 0.3
                color='k')
 
