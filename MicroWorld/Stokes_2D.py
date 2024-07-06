@@ -72,6 +72,7 @@ class Equations2D:
         u0, v0 =Idf[:,np.newaxis,np.newaxis]/modr+rrTF/modr**3.
         self.u += u0*coef
         self.v += v0*coef
+        self.arrows.append([r0[0], r0[1], F[0], F[1]])
 
 
 
@@ -210,7 +211,7 @@ class Equations2D:
             Fpar: direction and magnitude of the force, 
                     only parallel component will be considered
         """
-        Frel = np.array([Fpar[1], 0])
+        Frel = np.array([Fpar[0], 0])
         #real system
         self.stokeslet(r0, Frel)
         #image system
@@ -224,12 +225,11 @@ class Equations2D:
             Fpar: direction and magnitude of the force, 
                     only perpendicular component will be considered
         """
-        Frel = np.array([0, Fper[0]])
+        Frel = np.array([0, Fper[1]])
         #real system
         self.stokeslet(r0, Frel)
         #image system
         self.stokeslet(-r0, -Frel)
-        self.arrows.append([r0[0], r0[1], Frel[0], Frel[1]])
 
     def hard_wall_par(self, r0: np.ndarray, Fpar: np.ndarray):
         """
@@ -242,16 +242,16 @@ class Equations2D:
         rim =np.array([r0[0], -r0[1]])
         coef1 = 2*h
         coef2 = -2*h**2
-        d = np.array([1,0])
-        Frel = np.array([1, 0])*Fpar[0]
-        Fadd = np.array([0, 1])
+        d = np.array([0.00001,0])
+        Frel = np.array([Fpar[0], 0])
+        ey = np.array([0, 1])
+        ex = np.array([1, 0])
         #--real
         self.stokeslet(r0, Frel) 
         #--image
-        self.stokeslet(rim, Frel, coef=-1 ) 
-        self.dipole(rim, Fadd, d, coef=coef1)
-        self.source_dipole(rim, Frel, coef=coef2)
-        self.arrows.append([r0[0], r0[1], Frel[0], Frel[1]])
+        self.stokeslet(rim, ex, coef=-1*Fpar[0] ) 
+        self.dipole(rim, ey, ex, coef=coef1*Fpar[0])
+        self.source_dipole(rim, ex, coef=coef2*Fpar[0])
 
     def hard_wall_per(self, r0: np.ndarray, Fper: np.ndarray):
         """
@@ -262,17 +262,19 @@ class Equations2D:
         """
         h = r0[1]
         rim =np.array([r0[0], -r0[1]])
+        ey = np.array([0, 1])
+        ex = np.array([1, 0])
         coef0 = -1
         coef1 = -2*h
         coef2 = 2*h**2
-        d = np.array([0, 1])
-        Frel = np.array([0, Fper[0]])
+        d = np.array([0, 0.0001])
+        Frel = np.array([0, Fper[1]])
         #--real system
         self.stokeslet(r0, Frel) 
         #--image system
-        self.stokeslet(rim, Frel, coef=coef0 ) 
-        self.dipole(rim, Frel, d, coef=coef1)
-        self.source_dipole(rim, Frel, coef=coef2)
+        self.stokeslet(rim, ey, coef=coef0*Fper[1]) 
+        self.dipole(rim, ey, ey, coef=coef1*Fper[1])
+        self.source_dipole(rim, ey, coef=coef2*Fper[1])
     
     def totality_par(self, r0, Fpar: np.ndarray, ratio: float):
         """
@@ -287,15 +289,15 @@ class Equations2D:
         coef0 = (1-ratio)/(1+ratio)
         coef1 = (2*ratio*h)/(ratio+1)
         coef2 = -1*(2*ratio*h**2)/(ratio + 1)
-        d = np.array([1,0])
-        Frel = np.array([1, 0])*Fpar[0]
-        Fadd = np.array([0, 1])
+        Frel = np.array([Fpar[0], 0])
+        ex = np.array([1, 0])
+        ey = np.array([0, 1])
         #--real system
         self.stokeslet(r0, Frel) 
         #--image system
-        self.stokeslet(rim, Frel, coef=coef0 ) 
-        self.dipole(rim, Fadd, d, coef=coef1)
-        self.source_dipole(rim, Frel, coef=coef2)
+        self.stokeslet(rim, ex, coef=coef0*Fpar[0]) 
+        self.dipole(rim, ey, ex, coef=coef1*Fpar[0])
+        self.source_dipole(rim, ex, coef=coef2*Fpar[0])
     
     def totality_per(self, r0, Fper, ratio):
         """
@@ -310,14 +312,14 @@ class Equations2D:
         coef0 = -1
         coef1 = -(2*ratio*h)/(ratio+1)
         coef2 = (2*ratio*h**2)/(ratio + 1)
-        d = np.array([0, 1])
-        Frel = np.array([0, Fper[0]])
+        Frel = np.array([0, Fper[1]])
+        ey = np.array([0, 1])
         #--real system
         self.stokeslet(r0, Frel) 
         #--image system
-        self.stokeslet(rim, Frel, coef=coef0 ) 
-        self.dipole(rim, Frel, d, coef=coef1)
-        self.source_dipole(rim, Frel, coef=coef2)
+        self.stokeslet(rim, ey, coef=coef0*Fper[1]) 
+        self.dipole(rim, ey, ey, coef=coef1*Fper[1])
+        self.source_dipole(rim, ey, coef=coef2*Fper[1])
 
     def streamlines(self, xstart: np.ndarray, ystart: np.ndarray, mesh=False, direction=False, export=False, title='pass'):
         """
@@ -491,12 +493,18 @@ class Equations2D:
             ax.set_xlim(self.a, self.b)
             ax.set_ylim(self.a, self.b)
             ax.set_aspect('equal')
-            ax.set_xticks(np.arange(self.a, self.b + 1, 1))
-            ax.set_yticks(np.arange(self.a, self.b + 1, 1))
+            ax.set_xticks(np.arange(self.a, self.b + 1, 2))
+            ax.set_yticks(np.arange(self.a, self.b + 1, 2))
             
         elif self.flag == "wall":
             fig = plt.figure(figsize=(8,4),facecolor="w")
             ax = plt.axes()
+            q = self.a + 0.4
+            ax.set_xlim(q, self.b)
+            ax.set_ylim(-0.1, self.b)
+            ax.set_aspect('equal')
+            ax.set_xticks(np.arange(q, self.b + 1, 1))
+            ax.set_yticks(np.arange(0, self.b + 1, 1))
         else:
             print("Error in boundary conditions.")
 
