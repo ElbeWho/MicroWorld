@@ -1,5 +1,5 @@
 # MicroWorld
-In this repository we brought together most popular singularity solutions of Stokes’
+In this repository we brought together the most popular singularity solutions of Stokes’
 equation and created a program that can plot those. 
 We presented the fundamental solution for free space and incompressible fluid, called Stokeslet, that is Green’s Function. 
 Later on we took a closer look at its derivatives, that also satisfies our differential equation. 
