@@ -3,7 +3,7 @@ In this repository we brought together the most popular singularity solutions of
 equation and created a program that can plot those. 
 We presented the fundamental solution for free space and incompressible fluid, called Stokeslet, that is Green’s Function. 
 Later on we took a closer look at its derivatives, that also satisfies our differential equation.
-Those derivatives ale called singularity solutions and in this work we focused at dipole, Rotlet,
+Those derivatives are called singularity solutions and in this work we focused at dipole, Rotlet,
 Stresslet, source, sink and source doublet (source dipole). We also put in biological context to describe how bifalgellated
 algae and a spermatozoon swims.
 We also described flow for a point force next to interface of two liquids. As we relay on the
